@@ -3,7 +3,8 @@ ARG CODE_VERSION=latest
 # Install Node
 FROM ubuntu:${CODE_VERSION}
 
-WORKDIR /home/ftyd-express
+WORKDIR /
+COPY . ./
 
 ARG HOME=$HOME
 
@@ -29,9 +30,10 @@ RUN ls -l ./certs
 
 RUN apt-get update
 RUN apt-get -y install curl gnupg
-RUN curl -sL https://deb.nodesource.com/setup_14.x  | bash -
+RUN curl -sL https://deb.nodesource.com/setup_16.x  | bash -
 RUN apt-get -y install nodejs
 RUN npm install
+RUN node --version
 
 ARG AWS_ACCESS_KEY_ID
 ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
