@@ -6,6 +6,7 @@ bot.commands = new Discord.Collection();
 const botCommands = require('./commands');
 const express = require('express');
 const basicAuth = require('express-basic-auth');
+const helmet = require('helmet')
 const cors = require('cors');
 const http = require('http');
 const https = require('https');
@@ -47,7 +48,8 @@ httpsServer.listen(8443);
   response.status(200).json({ status: result });
 })
 
-app.use(cors())
+app.use(cors());
+app.use(helmet());
 
 app.use(basicAuth(
   {
