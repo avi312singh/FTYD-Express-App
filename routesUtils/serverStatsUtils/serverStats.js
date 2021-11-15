@@ -56,7 +56,8 @@ function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
                                 console.log('Email sent: ' + info.response);
                             }
                         })) :
-                    directQueryInfo["status"] = "online"
+                    (directQueryInfo["status"] = "online",
+                    emailLimit >= 1 ? (emailLimit = 0, console.log('Server is online again')) : '')
 
                 allServerInfo.push({ directQueryInfo: directQueryInfo })
                 allServerInfo.push({ directPlayerInfo: directPlayerInfoUtf8Encoded(directPlayerInfo) })
