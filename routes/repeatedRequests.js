@@ -113,7 +113,7 @@ router.get('/', async (req, res) => {
         })
 
         // sends query to steam to get all imageSrc of top players every 6 hours
-        cron.schedule('* */6 * * *', async () => {
+        cron.schedule('0 */6 * * *', async () => {
             console.log("Sending query to steam to get all imageSrc of top players every 6th hour")
             const topPlayersRequest = await topPlayers('', pool)
             const topPlayersResponse = topPlayersRequest.response
