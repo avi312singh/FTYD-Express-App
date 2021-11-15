@@ -3,11 +3,13 @@ const query = require("source-server-query");
 const utf8 = require('utf8');
 const nodemailer = require('nodemailer')
 
+const gmailPassword = process.env.GMAILPASSWORD || (() => { new Error("Provide a gmail password in env vars") });
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'avi312singh@gmail.com',
-        pass: 'mkgveelfnpocnhlk'
+        pass: gmailPassword
     }
 });
 
