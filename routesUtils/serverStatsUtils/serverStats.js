@@ -1,6 +1,24 @@
 const chalk = require('chalk');
 const query = require("source-server-query");
 const utf8 = require('utf8');
+const nodemailer = require('nodemailer')
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'avi312singh@gmail.com',
+        pass: 'mkgveelfnpocnhlk'
+    }
+});
+
+const serverOfflineEmail = {
+    from: 'avi312singh@gmail.com',
+    to: 'avi312singh@gmail.com',
+    subject: 'FTYD is offline',
+    text: 'The server has gone offline!'
+};
+
+let emailLimit = 0;
 
 function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
     for (i = 0; i < arrayToBeUtf8d.length; i++) {
@@ -26,7 +44,17 @@ function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
                         .then(query.close)
                         .catch(console.error);
 
-                directQueryInfo instanceof Error ? directQueryInfo["status"] = "offline" : directQueryInfo["status"] = "online"
+                directQueryInfo instanceof Error ?
+                    (directQueryInfo["status"] = "offline",
+                        emailLimit++,
+                        emailLimit <= 10 && transporter.sendMail(serverOfflineEmail, (error, info) => {
+                            if (error) {
+                                console.log(error);
+                            } else {
+                                console.log('Email sent: ' + info.response);
+                            }
+                        })) :
+                    directQueryInfo["status"] = "online"
 
                 allServerInfo.push({ directQueryInfo: directQueryInfo })
                 allServerInfo.push({ directPlayerInfo: directPlayerInfoUtf8Encoded(directPlayerInfo) })
