@@ -37,12 +37,12 @@ function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
             try {
                 directQueryInfo =
                     await query
-                        .info(serverIp, 7778, 800)
+                        .info(serverIp, 7778, 2000)
                         .then(query.close)
                         .catch(console.error);
                 directPlayerInfo =
                     await query
-                        .players(serverIp, 7778, 800)
+                        .players(serverIp, 7778, 2000)
                         .then(query.close)
                         .catch(console.error);
 
