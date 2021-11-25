@@ -1,26 +1,6 @@
 const chalk = require('chalk');
 const query = require("source-server-query");
 const utf8 = require('utf8');
-const nodemailer = require('nodemailer')
-
-const gmailPassword = process.env.GMAILPASSWORD || (() => { new Error("Provide a gmail password in env vars") });
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'avi312singh@gmail.com',
-        pass: gmailPassword
-    }
-});
-
-const serverOfflineEmail = {
-    from: 'avi312singh@gmail.com',
-    to: 'avi312singh@gmail.com',
-    subject: 'FTYD is offline',
-    text: 'The server has gone offline!'
-};
-
-let emailLimit = 0;
 
 function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
     for (i = 0; i < arrayToBeUtf8d.length; i++) {
@@ -37,27 +17,16 @@ function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
             try {
                 directQueryInfo =
                     await query
-                        .info(serverIp, 7778, 2000)
+                        .info(serverIp, 7778, 800)
                         .then(query.close)
                         .catch(console.error);
                 directPlayerInfo =
                     await query
-                        .players(serverIp, 7778, 2000)
+                        .players(serverIp, 7778, 800)
                         .then(query.close)
                         .catch(console.error);
 
-                directQueryInfo instanceof Error ?
-                    (directQueryInfo["status"] = "offline",
-                        emailLimit++,
-                        emailLimit <= 10 && transporter.sendMail(serverOfflineEmail, (error, info) => {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                console.log('Email sent: ' + info.response);
-                            }
-                        })) :
-                    (directQueryInfo["status"] = "online",
-                    emailLimit >= 1 ? (emailLimit = 0, console.log('Server is online again')) : '')
+                directQueryInfo instanceof Error ? directQueryInfo["status"] = "offline" : directQueryInfo["status"] = "online"
 
                 allServerInfo.push({ directQueryInfo: directQueryInfo })
                 allServerInfo.push({ directPlayerInfo: directPlayerInfoUtf8Encoded(directPlayerInfo) })
