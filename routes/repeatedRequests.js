@@ -20,6 +20,7 @@ const topPlayers = require('../routesUtils/aggregatedStatsUtils/topPlayers');
 const allRows = require('../routesUtils/dbInteractionsUtils/allRows.js');
 const steamRequest = require('../routesUtils/repeatedRequestsUtils/steamRequest');
 const steamSessionRequest = require('../routesUtils/repeatedRequestsUtils/steamSessionIdRequest');
+const serverStatus = require('../routesUtils/repeatedRequestsUtils/serverStatus');
 
 const pool = require('../db/db');
 
@@ -93,6 +94,11 @@ router.get('/', async (req, res) => {
                     console.log(chalk.red(result))
                 })
         });
+
+        // sends query every 3 minutes to server to check if online if not then send email
+        cron.schedule('*/3 * * * *', async () => {
+            await serverStatus().then(console.log(chalk.blue('I WAS TRIGGERED ON LINE 86 in repeated requests AT ')));
+        })
 
         // sends query to set all daily columns to 0 at 00:01 everyday
         cron.schedule('01 00 * * *', async () => {
