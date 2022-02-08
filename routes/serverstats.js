@@ -43,33 +43,39 @@ router.use(function timeLog(req, res, next) {
     next()
 })
 
-    router.get('/', async (req, res) => {
-        const currentMapName = "aocffa-ftyd_41_s_wip"
-        const currentServerName = "*** Fall To Your Death 24/7 2.4 64 Players ***"
-        await serverStatsUtil(currentMapName, currentServerName, serverIp).then(response => {
-            console.log('GET serverstats');
-            res.status(200).json({ response })});
-    })
+router.get('/', async (req, res) => {
+    const currentMapName = "aocffa-ftyd_41_s_wip"
+    const currentServerName = "*** Fall To Your Death 24/7 2.4 64 Players ***"
+    await serverStatsUtil(currentMapName, currentServerName, serverIp).then(response => {
+        console.log('GET serverstats');
+        res.status(200).json({ response })
+    });
+})
 
-    router.post('/', async (req, res) => {
+router.post('/', async (req, res) => {
     if (req.query.name) {
         pool.getConnection((err, connection) => {
-            const name = decodeURIComponent(req.query.name);
-            if (err) console.log(err);
-            connection.query(`INSERT INTO playerInfo (playerName, online) VALUES (?, 1) ON DUPLICATE KEY UPDATE totalTime = totalTime + .25, totalTimeDaily = totalTimeDaily + .25, totalTimeWeekly = totalTimeWeekly + .25, totalTimeMonthly = totalTimeMonthly + .25`, [name], (err, result, fields) => {
+            try {
+                const name = decodeURIComponent(req.query.name);
                 if (err) console.log(err);
-                if (result) {
-                    console.log('POST serverstats');
-                    res.status(201).json({
-                        name: name
-                    })
-                    console.log(chalk.blue('Database entry ' + chalk.whiteBright.underline(keyword(name)) + ' added/updated for / POST!'))
-                    console.log({ name: name, online: true })
-                }
-                if (fields) console.log(fields);
-                connection.release();
-                if (err) throw err;
-            });
+                connection.query(`INSERT INTO playerInfo (playerName, online) VALUES (?, 1) ON DUPLICATE KEY UPDATE totalTime = totalTime + .25, totalTimeDaily = totalTimeDaily + .25, totalTimeWeekly = totalTimeWeekly + .25, totalTimeMonthly = totalTimeMonthly + .25`, [name], (err, result, fields) => {
+                    if (err) console.log(err);
+                    if (result) {
+                        console.log('POST serverstats');
+                        res.status(201).json({
+                            name: name
+                        })
+                        console.log(chalk.blue('Database entry ' + chalk.whiteBright.underline(keyword(name)) + ' added/updated for / POST!'))
+                        console.log({ name: name, online: true })
+                    }
+                    if (fields) console.log(fields);
+                    connection.release();
+                    if (err) throw err;
+                });
+            }
+            catch (error) {
+                console.error(error)
+            }
         });
     } else {
         res.status(400).json({
@@ -95,26 +101,28 @@ router.post('/imageSrc', async (req, res) => {
 })
 router.post('/lastLogin', (req, res) => {
     lastLoginUtil(req.query.name)
-    .then(result => {
-        res.status(201).json(result)
-        console.log(chalk.blue('Database entry ' + chalk.whiteBright.underline(keyword(result.lastLogin)) + ' added/updated for /lastLogin POST!'))
-        console.log({ name: result.name, lastLogin: result.lastLogin })
-    })
-    .catch(result => {
-        console.log(chalk.red(result))
-        res.status(400).json({message: result})})
+        .then(result => {
+            res.status(201).json(result)
+            console.log(chalk.blue('Database entry ' + chalk.whiteBright.underline(keyword(result.lastLogin)) + ' added/updated for /lastLogin POST!'))
+            console.log({ name: result.name, lastLogin: result.lastLogin })
+        })
+        .catch(result => {
+            console.log(chalk.red(result))
+            res.status(400).json({ message: result })
+        })
 })
 
 router.post('/kills', async (req, res) => {
     killsUtil(req.query.name, req.query.kills)
-    .then(result => {
-        res.status(201).json(result)
-        console.log(chalk.blue('Database entry ' + chalk.whiteBright.underline(keyword(result.kills)) + ' added/updated for /kills POST!'))
-        console.log({ name: result.name, kills: result.kills })
-    })
-    .catch(result => {
-        console.log(chalk.red(result))
-        res.status(400).json({ message: result })})
+        .then(result => {
+            res.status(201).json(result)
+            console.log(chalk.blue('Database entry ' + chalk.whiteBright.underline(keyword(result.kills)) + ' added/updated for /kills POST!'))
+            console.log({ name: result.name, kills: result.kills })
+        })
+        .catch(result => {
+            console.log(chalk.red(result))
+            res.status(400).json({ message: result })
+        })
 })
 
 router.post('/pointsSpent', async (req, res) => {
@@ -133,7 +141,7 @@ router.post('/pointsSpent', async (req, res) => {
 router.post('/temporaryData', async (req, res) => {
     temporaryDataUtil(req.query.name, req.query.time, req.query.score, req.query.tableName, recognisedTemporaryTableNames)
         .then(result => {
-            res.status(201).json({ message: `Created temporary player inside ${result.tableName}`})
+            res.status(201).json({ message: `Created temporary player inside ${result.tableName}` })
             console.log(chalk.blue('Database entry ' + chalk.whiteBright.underline(keyword(result.name)) + " with duration " + chalk.whiteBright.underline(keyword(result.time)) + " and score " + chalk.whiteBright.underline(keyword(result.score)) +
                 ' added into ' + result.tableName + ' for /temporaryData POST'))
         })

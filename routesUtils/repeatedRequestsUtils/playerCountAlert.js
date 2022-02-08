@@ -12,6 +12,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+
 {
     module.exports =
         async () => {
@@ -22,23 +23,22 @@ const transporter = nodemailer.createTransport({
                         .then(query.close)
                         .catch(console.error);
 
-                const serverOfflineEmail = {
+                const playerCountEmail = {
                     from: 'avi312singh@gmail.com',
                     to: 'avi312singh@gmail.com',
-                    subject: 'FTYD is offline',
-                    text: 'The server has gone offline! ' + directQueryInfo
+                    subject: 'FTYD player count: ' + directQueryInfo.playersnum,
+                    text: 'The player count has gone above 20! ' + directQueryInfo
                 };
 
-                return directQueryInfo instanceof Error ?
-                    transporter.sendMail(serverOfflineEmail, (error, info) => {
+                directQueryInfo instanceof !Error && directQueryInfo.playersnum > 20
+                    return transporter.sendMail(playerCountEmail, (error, info) => {
                         if (error) {
                             console.log(error);
                         } else {
-                            console.log('Server is offline!');
+                            console.log('Server is online!');
                             console.log('Email sent: ' + info.response + ' and this was returned from the server fetch request: ' + directQueryInfo);
                         }
-                    }) :
-                    console.log('Server is online!');
+                    })
             }
             catch (error) {
                 return console.error(chalk.red("Error occurred whilst sending a request to the server regarding its status with error: " + error))

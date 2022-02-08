@@ -21,6 +21,7 @@ const allRows = require('../routesUtils/dbInteractionsUtils/allRows.js');
 const steamRequest = require('../routesUtils/repeatedRequestsUtils/steamRequest');
 const steamSessionRequest = require('../routesUtils/repeatedRequestsUtils/steamSessionIdRequest');
 const serverStatus = require('../routesUtils/repeatedRequestsUtils/serverStatus');
+const playerCountAlert = require('../routesUtils/repeatedRequestsUtils/playerCountAlert');
 
 const pool = require('../db/db');
 
@@ -95,9 +96,14 @@ router.get('/', async (req, res) => {
                 })
         });
 
-        // sends query every 3 minutes to server to check if online if not then send email
-        cron.schedule('*/3 * * * *', async () => {
-            await serverStatus().then(console.log(chalk.blue('I WAS TRIGGERED ON LINE 86 in repeated requests AT ')));
+        // sends query every 2 minutes to server to check if online if not then send email
+        cron.schedule('*/2 * * * *', async () => {
+            await serverStatus().then(console.log(chalk.blue('I WAS TRIGGERED ON LINE 100 in repeated requests AT ' + moment().format('YYYY-MM-DD HH:mm:ss') + 'Sent query to see if server is online or offline ')));
+        })
+
+        // sends query every 5 minutes to server to check if player count exceeds amount
+        cron.schedule('*/5 * * * *', async () => {
+            await playerCountAlert().then(console.log(chalk.blue('I WAS TRIGGERED ON LINE 105 in repeated requests AT ' + moment().format('YYYY-MM-DD HH:mm:ss') + 'Sent query to see if server player count has gone above 20 ')));
         })
 
         // sends query to set all daily columns to 0 at 00:01 everyday
