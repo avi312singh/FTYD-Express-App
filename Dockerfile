@@ -1,5 +1,5 @@
 # Only instruction done before a FROM
-ARG CODE_VERSION=latest
+ARG CODE_VERSION=21.10
 # Install Node
 FROM ubuntu:${CODE_VERSION}
 

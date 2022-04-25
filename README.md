@@ -14,4 +14,4 @@ docker run -p 666:666 -d avi312singh/ftyd-express-server
 ## Deployed FE & BE
 
 backend: https://falltoyourdeathbe.co.uk:8443/
-frontend: https://falltoyourdeath.gtsb.io/
+frontend: https://falltoyourdeathserver.com/
