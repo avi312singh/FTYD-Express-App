@@ -11,7 +11,7 @@
   "author": "Aviraj Mandair",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.26.1",
+    "axios": "^1.2.2",
     "chalk": "^4.1.2",
     "cheerio": "^1.0.0-rc.10",
     "cookie": "^0.5.0",
