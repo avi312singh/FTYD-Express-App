@@ -11,6 +11,7 @@ docker build --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --build-arg AWS_SE
 docker run -p 666:666 -d avi312singh/ftyd-express-server
 
 ### Note: You need to export your aws environment variables so docker can use them during build
+
 ## Deployed FE & BE
 
 backend: https://falltoyourdeathbe.co.uk:8443/

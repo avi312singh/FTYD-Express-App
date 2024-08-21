@@ -1,15 +1,20 @@
 module.exports = (durationFromRequest, pool) => {
-    return new Promise((resolve, reject) => {
-        try {
-            const durationCheckIfInParams = durationFromRequest ? durationFromRequest : 288;
-            const duration = durationCheckIfInParams !== '2016' && durationCheckIfInParams !== '8760'
-                ? 288 : parseInt(durationCheckIfInParams)
-            pool.getConnection((err, connection) => {
-                if (err) console.log(err);
-                switch (duration) {
-                    case 2016:
-                    case 8760:
-                        connection.query(`SELECT
+  return new Promise((resolve, reject) => {
+    try {
+      const durationCheckIfInParams = durationFromRequest
+        ? durationFromRequest
+        : 288;
+      const duration =
+        durationCheckIfInParams !== "2016" && durationCheckIfInParams !== "8760"
+          ? 288
+          : parseInt(durationCheckIfInParams);
+      pool.getConnection((err, connection) => {
+        if (err) console.log(err);
+        switch (duration) {
+          case 2016:
+          case 8760:
+            connection.query(
+              `SELECT
                                             time, playerCount
                                             FROM (
                                             SELECT
@@ -20,18 +25,22 @@ module.exports = (durationFromRequest, pool) => {
                                             WHERE rownum % 4 = 1
                                             ORDER BY
                                             time;`,
-                        (err, result) => {
-                            if (err) console.log(err);
-                            return err ? reject(err) : resolve({
-                                duration,
-                                response: result
-                            });
-                        });
-                        connection.release();
-                        if (err) throw err;
-                        break;
-                    case 288:
-                        connection.query(`SELECT
+              (err, result) => {
+                if (err) console.log(err);
+                return err
+                  ? reject(err)
+                  : resolve({
+                      duration,
+                      response: result,
+                    });
+              },
+            );
+            connection.release();
+            if (err) throw err;
+            break;
+          case 288:
+            connection.query(
+              `SELECT
                                         time, playerCount
                                         FROM
                                             (
@@ -39,21 +48,23 @@ module.exports = (durationFromRequest, pool) => {
                                             ) a
                                         ORDER BY
                                         time;`,
-                        (err, result) => {
-                            if (err) console.log(err);
-                            return err ? reject(err) : resolve({
-                                duration,
-                                response: result
-                            });
-                        });
-                        connection.release();
-                        if (err) throw err;
-                        break;
-                }
-            });
+              (err, result) => {
+                if (err) console.log(err);
+                return err
+                  ? reject(err)
+                  : resolve({
+                      duration,
+                      response: result,
+                    });
+              },
+            );
+            connection.release();
+            if (err) throw err;
+            break;
         }
-        catch (error) {
-            reject('Error has occurred ', error)
-        }
-    })
-}
+      });
+    } catch (error) {
+      reject("Error has occurred ", error);
+    }
+  });
+};

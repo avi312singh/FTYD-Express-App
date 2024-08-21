@@ -6,29 +6,29 @@ bot.commands = new Discord.Collection();
 const botCommands = require('./commands');
 const express = require('express');
 const basicAuth = require('express-basic-auth');
-const helmet = require('helmet')
+const helmet = require('helmet');
 const cors = require('cors');
 const http = require('http');
-const https = require('https');
-const fs = require('fs');
 
-const serverStats = require('./routes/serverstats')
-const aggregatedStats = require('./routes/aggregatedstats')
-const repeatedRequests = require('./routes/repeatedRequests')
-const dbInteractions = require('./routes/dbInteractions')
+const serverStats = require('./routes/serverstats');
+const aggregatedStats = require('./routes/aggregatedstats');
+const repeatedRequests = require('./routes/repeatedRequests');
+const dbInteractions = require('./routes/dbInteractions');
 
-Object.keys(botCommands).map(key => {
+Object.keys(botCommands).map((key) => {
   bot.commands.set(botCommands[key].name, botCommands[key]);
 });
 
-const basicAuthUsername = process.env.BASICAUTHUSERNAME || (() => { new Error("Provide a basic auth username in env vars") });
-const basicAuthPassword = process.env.BASICAUTHPASSWORD || (() => { new Error("Provide a basic auth password in env vars") });
-const certPath = process.env.CERTPATH || (() => { new Error("Provide a certpath in env vars") });
-
-const httpsOptions = {
-  key: fs.readFileSync(`${certPath}/privkey.pem`),
-  cert: fs.readFileSync(`${certPath}/fullchain.pem`)
-};
+const basicAuthUsername =
+  process.env.BASICAUTHUSERNAME ||
+  (() => {
+    new Error('Provide a basic auth username in env vars');
+  });
+const basicAuthPassword =
+  process.env.BASICAUTHPASSWORD ||
+  (() => {
+    new Error('Provide a basic auth password in env vars');
+  });
 
 const users = {};
 users[basicAuthUsername] = basicAuthPassword;
@@ -36,38 +36,35 @@ users[basicAuthUsername] = basicAuthPassword;
 const app = express();
 
 const httpServer = http.createServer(app);
-const httpsServer = https.createServer(httpsOptions, app);
 
-httpServer.listen(8080);
-httpsServer.listen(8443);
+httpServer.listen(PORT, () => {
+  console.log(`App is running, server is listening on port ${PORT}`);
+});
 
-  console.log('App is running, server is listening on http 8080 and https 8443');
-
-  app.get('/', function (request, response) {
-  const result = 'App is running'
+app.get('/', function (request, response) {
+  const result = 'App is running';
   response.status(200).json({ status: result });
-})
+});
 
 app.use(cors());
 app.use(helmet());
 
-app.use(basicAuth(
-  {
+app.use(
+  basicAuth({
     users: {
-      avi312: basicAuthPassword
+      avi312: basicAuthPassword,
     },
     unauthorizedResponse: {
       message: 'Bad credentials',
     },
     challenge: true,
-  }));
+  })
+);
 
-
-
-app.use('/serverStats', serverStats)
-app.use('/aggregatedStats', aggregatedStats)
-app.use('/repeatedRequests', repeatedRequests)
-app.use('/dbInteractions', dbInteractions)
+app.use('/serverStats', serverStats);
+app.use('/aggregatedStats', aggregatedStats);
+app.use('/repeatedRequests', repeatedRequests);
+app.use('/dbInteractions', dbInteractions);
 
 // //For avoiding Heroku $PORT error
 // app.get('/', function (request, response) {
@@ -77,15 +74,15 @@ app.use('/dbInteractions', dbInteractions)
 //   console.log('App is running, server is listening on port ', app.get('port'));
 // });
 
-const TOKEN = process.env.TOKEN
+const TOKEN = process.env.TOKEN;
 bot.login(TOKEN);
 
 bot.on('ready', () => {
   console.info(`Logged in as ${bot.user.tag}!`);
 });
 
-bot.on('message', msg => {
-  if (!msg.content.startsWith("!")) return;
+bot.on('message', (msg) => {
+  if (!msg.content.startsWith('!')) return;
   const args = msg.content.split(/ +/);
   const command = args.shift().toLowerCase();
   console.info(`Called command: ${command}`);
