@@ -1,8 +1,11 @@
 {
-  "name": "discord-bot",
+  "name": "ftyd-statistics",
   "version": "2.0.0",
   "description": "Discord bot and statistics generator for chivalry (source) server",
   "main": "index.js",
+  "engines": {
+    "node": "v16.20.0"
+  },
   "scripts": {
     "start": "node --trace-warnings index.js",
     "start-dev": "nodemon index.js",

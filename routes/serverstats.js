@@ -1,82 +1,84 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const chalk = require("chalk");
-const moment = require("moment");
-const winston = require("winston");
+const chalk = require('chalk');
+const moment = require('moment');
+const winston = require('winston');
 
-const lastLoginUtil = require("../routesUtils/serverStatsUtils/lastLogin");
-const killsUtil = require("../routesUtils/serverStatsUtils/kills");
-const pointsSpentUtil = require("../routesUtils/serverStatsUtils/pointsSpent");
-const imageSrcUtil = require("../routesUtils/serverStatsUtils/imageSrc");
-const serverStatsUtil = require("../routesUtils/serverStatsUtils/serverStats");
-const temporaryDataUtil = require("../routesUtils/serverStatsUtils/temporaryData");
+const lastLoginUtil = require('../routesUtils/serverStatsUtils/lastLogin');
+const killsUtil = require('../routesUtils/serverStatsUtils/kills');
+const pointsSpentUtil = require('../routesUtils/serverStatsUtils/pointsSpent');
+const imageSrcUtil = require('../routesUtils/serverStatsUtils/imageSrc');
+const serverStatsUtil = require('../routesUtils/serverStatsUtils/serverStats');
+const temporaryDataUtil = require('../routesUtils/serverStatsUtils/temporaryData');
 
-const pool = require("../db/db");
+const pool = require('../db/db');
 
 const serverIp =
   process.env.SERVERIP ||
   (() => {
-    new Error("Provide a server IP in env vars");
+    new Error('Provide a server IP in env vars');
   });
 const basicAuthUsername =
   process.env.BASICAUTHUSERNAME ||
   (() => {
-    new Error("Provide a server IP in env vars");
+    new Error('Provide a server IP in env vars');
   });
 const basicAuthPassword =
   process.env.BASICAUTHPASSWORD ||
   (() => {
-    new Error("Provide a server IP in env vars");
+    new Error('Provide a server IP in env vars');
   });
 
 const recognisedTemporaryTableNames = [
-  "playersComparisonFirst",
-  "playersComparisonSecond",
+  'playersComparisonFirst',
+  'playersComparisonSecond',
 ];
 
 const users = {};
 users[basicAuthUsername] = basicAuthPassword;
 
-const dir = "./logging/";
+const dir = './logging/';
 const logger = winston.createLogger({
-  level: "info",
+  level: 'info',
   format: winston.format.json(),
-  defaultMeta: { service: "user-service" },
+  defaultMeta: { service: 'user-service' },
   transports: [
     new winston.transports.File({
       filename: `${dir}logging.log`,
-      level: "info",
+      level: 'info',
       maxsize: 7000,
     }),
     new winston.transports.File({
       filename: `${dir}error.log`,
-      level: "error",
+      level: 'error',
     }),
   ],
 });
-const keyword = (keyword) => chalk.keyword("blue")(keyword);
+const keyword = (keyword) => chalk.keyword('blue')(keyword);
 
 router.use(function timeLog(req, res, next) {
-  const timestampForRequest = moment().format("YYYY-MM-DD HH:mm:ss");
+  const timestampForRequest = moment().format('YYYY-MM-DD HH:mm:ss');
   logger.log({
-    level: "info",
-    message: `Request received at: ${timestampForRequest} + ' from IP address: ' + ${req.headers["x-forwarded-for"] || req.connection.remoteAddress || null}`,
+    level: 'info',
+    message: `Request received at: ${timestampForRequest} + ' from IP address: ' + ${
+      req.headers['x-forwarded-for'] || req.connection.remoteAddress || null
+    }`,
   });
   next();
 });
 
-router.get("/", async (req, res) => {
-  const currentMapName = "aocffa-ftyd_41_s_wip";
-  const currentServerName = "*** Fall To Your Death 24/7 2.4 64 Players ***";
+router.get('/', async (req, res) => {
+  const currentMapName = 'aocffa-ftyd_5_6_4';
+  const currentServerName = '*** falltoyourdeathserver.com FTYD 24/7 ***';
   await serverStatsUtil(currentMapName, currentServerName, serverIp).then(
     (response) => {
-      console.log("GET serverstats");
+      console.log('GET serverstats');
       res.status(200).json({ response });
-    },
+    }
   );
 });
 
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   if (req.query.name) {
     pool.getConnection((err, connection) => {
       try {
@@ -88,23 +90,23 @@ router.post("/", async (req, res) => {
           (err, result, fields) => {
             if (err) console.log(err);
             if (result) {
-              console.log("POST serverstats");
+              console.log('POST serverstats');
               res.status(201).json({
                 name: name,
               });
               console.log(
                 chalk.blue(
-                  "Database entry " +
+                  'Database entry ' +
                     chalk.whiteBright.underline(keyword(name)) +
-                    " added/updated for / POST!",
-                ),
+                    ' added/updated for / POST!'
+                )
               );
               console.log({ name: name, online: true });
             }
             if (fields) console.log(fields);
             connection.release();
             if (err) throw err;
-          },
+          }
         );
       } catch (error) {
         console.error(error);
@@ -113,23 +115,23 @@ router.post("/", async (req, res) => {
   } else {
     res.status(400).json({
       error: {
-        message: "Please provide name in request",
+        message: 'Please provide name in request',
       },
     });
-    console.log("Missing a parameter");
+    console.log('Missing a parameter');
   }
 });
 
-router.post("/imageSrc", async (req, res) => {
+router.post('/imageSrc', async (req, res) => {
   imageSrcUtil(req.query.name, req.query.imageSrc)
     .then((result) => {
       res.status(201).json(result);
       console.log(
         chalk.blue(
-          "Database entry " +
+          'Database entry ' +
             chalk.whiteBright.underline(keyword(result.lastLogin)) +
-            " added/updated for /imageSrc POST!",
-        ),
+            ' added/updated for /imageSrc POST!'
+        )
       );
       console.log({ name: result.name, lastLogin: result.imageSrc });
     })
@@ -138,16 +140,16 @@ router.post("/imageSrc", async (req, res) => {
       res.status(400).json({ message: result });
     });
 });
-router.post("/lastLogin", (req, res) => {
+router.post('/lastLogin', (req, res) => {
   lastLoginUtil(req.query.name)
     .then((result) => {
       res.status(201).json(result);
       console.log(
         chalk.blue(
-          "Database entry " +
+          'Database entry ' +
             chalk.whiteBright.underline(keyword(result.lastLogin)) +
-            " added/updated for /lastLogin POST!",
-        ),
+            ' added/updated for /lastLogin POST!'
+        )
       );
       console.log({ name: result.name, lastLogin: result.lastLogin });
     })
@@ -157,16 +159,16 @@ router.post("/lastLogin", (req, res) => {
     });
 });
 
-router.post("/kills", async (req, res) => {
+router.post('/kills', async (req, res) => {
   killsUtil(req.query.name, req.query.kills)
     .then((result) => {
       res.status(201).json(result);
       console.log(
         chalk.blue(
-          "Database entry " +
+          'Database entry ' +
             chalk.whiteBright.underline(keyword(result.kills)) +
-            " added/updated for /kills POST!",
-        ),
+            ' added/updated for /kills POST!'
+        )
       );
       console.log({ name: result.name, kills: result.kills });
     })
@@ -176,16 +178,16 @@ router.post("/kills", async (req, res) => {
     });
 });
 
-router.post("/pointsSpent", async (req, res) => {
+router.post('/pointsSpent', async (req, res) => {
   pointsSpentUtil(req.query.name, req.query.pointsSpent)
     .then((result) => {
       res.status(201).json(result);
       console.log(
         chalk.blue(
-          "Database entry " +
+          'Database entry ' +
             chalk.whiteBright.underline(keyword(result.pointsSpent)) +
-            " added/updated for /pointSpent POST!",
-        ),
+            ' added/updated for /pointSpent POST!'
+        )
       );
       console.log({ name: result.name, pointsSpent: result.pointsSpent });
     })
@@ -195,13 +197,13 @@ router.post("/pointsSpent", async (req, res) => {
     });
 });
 
-router.post("/temporaryData", async (req, res) => {
+router.post('/temporaryData', async (req, res) => {
   temporaryDataUtil(
     req.query.name,
     req.query.time,
     req.query.score,
     req.query.tableName,
-    recognisedTemporaryTableNames,
+    recognisedTemporaryTableNames
   )
     .then((result) => {
       res.status(201).json({
@@ -209,16 +211,16 @@ router.post("/temporaryData", async (req, res) => {
       });
       console.log(
         chalk.blue(
-          "Database entry " +
+          'Database entry ' +
             chalk.whiteBright.underline(keyword(result.name)) +
-            " with duration " +
+            ' with duration ' +
             chalk.whiteBright.underline(keyword(result.time)) +
-            " and score " +
+            ' and score ' +
             chalk.whiteBright.underline(keyword(result.score)) +
-            " added into " +
+            ' added into ' +
             result.tableName +
-            " for /temporaryData POST",
-        ),
+            ' for /temporaryData POST'
+        )
       );
     })
     .catch((result) => {
