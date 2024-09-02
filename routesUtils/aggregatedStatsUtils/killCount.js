@@ -17,7 +17,7 @@ module.exports = (durationFromRequest, pool) => {
           // weekly
           case 2016:
             connection.query(
-              `SELECT SUM(totalKillsWeekly) as totalKillsWeekly FROM sys.playerInfo;`,
+              `SELECT SUM(totalKillsWeekly) as totalKillsWeekly FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -34,7 +34,7 @@ module.exports = (durationFromRequest, pool) => {
           // monthly
           case 8760:
             connection.query(
-              `SELECT SUM(totalKillsMonthly) as totalKillsMonthly FROM sys.playerInfo;`,
+              `SELECT SUM(totalKillsMonthly) as totalKillsMonthly FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -51,7 +51,7 @@ module.exports = (durationFromRequest, pool) => {
           // all
           case 666:
             connection.query(
-              `SELECT SUM(totalKills) as totalKills FROM sys.playerInfo;`,
+              `SELECT SUM(totalKills) as totalKills FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -68,7 +68,7 @@ module.exports = (durationFromRequest, pool) => {
           // daily
           case 288:
             connection.query(
-              `SELECT SUM(totalKillsDaily) as totalKillsDaily FROM sys.playerInfo;`,
+              `SELECT SUM(totalKillsDaily) as totalKillsDaily FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -85,7 +85,7 @@ module.exports = (durationFromRequest, pool) => {
           // all columns
           case 999:
             connection.query(
-              `SELECT SUM(totalKillsDaily), SUM(totalKillsWeekly), SUM(totalKillsMonthly), SUM(totalKills) FROM sys.playerInfo;`,
+              `SELECT SUM(totalKillsDaily), SUM(totalKillsWeekly), SUM(totalKillsMonthly), SUM(totalKills) FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 const durations = ["Today", "Week", "Month", "All"];

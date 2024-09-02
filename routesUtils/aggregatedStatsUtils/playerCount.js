@@ -20,7 +20,7 @@ module.exports = (durationFromRequest, pool) => {
                                             SELECT
                                                 @row := @row +1 AS rownum, time, playerCount
                                             FROM (
-                                                SELECT @row :=0) r, sys.serverInfo ORDER BY time DESC limit ${duration}
+                                                SELECT @row :=0) r, serverInfo ORDER BY time DESC limit ${duration}
                                             ) ranked
                                             WHERE rownum % 4 = 1
                                             ORDER BY
@@ -44,7 +44,7 @@ module.exports = (durationFromRequest, pool) => {
                                         time, playerCount
                                         FROM
                                             (
-                                            SELECT time, playerCount FROM sys.serverInfo ORDER BY time DESC limit 288
+                                            SELECT time, playerCount FROM serverInfo ORDER BY time DESC limit 288
                                             ) a
                                         ORDER BY
                                         time;`,

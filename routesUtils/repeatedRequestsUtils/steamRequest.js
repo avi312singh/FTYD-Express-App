@@ -30,8 +30,8 @@ module.exports = async (sessionId, playerNameUnescaped) => {
         const $ = cheerio.load(response.data.html);
         // get first result always
         const imageSrc = // href of avatar jpg of the first result
-        $(".mediumHolder_default .avatarMedium img[src]").get()[0]?.attribs
-          ?.src;
+          $(".mediumHolder_default .avatarMedium img[src]").get()[0]?.attribs
+            ?.src;
         return setTimeout(() => {
           resolve(imageSrc);
           console.log("Waited for 1000ms");

@@ -204,11 +204,9 @@ router.post("/temporaryData", async (req, res) => {
     recognisedTemporaryTableNames,
   )
     .then((result) => {
-      res
-        .status(201)
-        .json({
-          message: `Created temporary player inside ${result.tableName}`,
-        });
+      res.status(201).json({
+        message: `Created temporary player inside ${result.tableName}`,
+      });
       console.log(
         chalk.blue(
           "Database entry " +

@@ -22,13 +22,13 @@ async function restartServer(queryName) {
   switch (queryName[0]) {
     case "main":
       directQueryInfo = query
-        .info(serverIp, 7778, 2000)
+        .info(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       break;
     case "Main":
       directQueryInfo = query
-        .info(serverIp, 7778, 2000)
+        .info(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       break;

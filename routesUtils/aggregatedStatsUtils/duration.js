@@ -17,7 +17,7 @@ module.exports = (durationFromRequest, pool) => {
           // weekly
           case 2016:
             connection.query(
-              `SELECT SUM(totalTimeWeekly) as totalTimeWeekly FROM sys.playerInfo;`,
+              `SELECT SUM(totalTimeWeekly) as totalTimeWeekly FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -34,7 +34,7 @@ module.exports = (durationFromRequest, pool) => {
           // monthly
           case 8760:
             connection.query(
-              `SELECT SUM(totalTimeMonthly) as totalTimeMonthly FROM sys.playerInfo;`,
+              `SELECT SUM(totalTimeMonthly) as totalTimeMonthly FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -51,7 +51,7 @@ module.exports = (durationFromRequest, pool) => {
           // all
           case 666:
             connection.query(
-              `SELECT SUM(totalTime) as totalTime FROM sys.playerInfo;`,
+              `SELECT SUM(totalTime) as totalTime FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -68,7 +68,7 @@ module.exports = (durationFromRequest, pool) => {
           // daily
           case 288:
             connection.query(
-              `SELECT SUM(totalTimeDaily) as totalTimeDaily FROM sys.playerInfo;`,
+              `SELECT SUM(totalTimeDaily) as totalTimeDaily FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 return err
@@ -85,7 +85,7 @@ module.exports = (durationFromRequest, pool) => {
           // all columns
           case 999:
             connection.query(
-              `SELECT SUM(totalTimeDaily), SUM(totalTimeWeekly), SUM(totalTimeMonthly), SUM(totalTime) FROM sys.playerInfo;`,
+              `SELECT SUM(totalTimeDaily), SUM(totalTimeWeekly), SUM(totalTimeMonthly), SUM(totalTime) FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
                 const durations = ["Today", "Week", "Month", "All"];

@@ -30,22 +30,22 @@ async function serverInfo(queryName) {
     case "main":
       nameToBeSearched = "*** Fall To Your Death 24/7";
       directQueryInfo = await query
-        .info(serverIp, 7778, 2000)
+        .info(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       directPlayerInfo = await query
-        .players(serverIp, 7778, 2000)
+        .players(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       break;
     case "Main":
       nameToBeSearched = "*** Fall To Your Death 24/7";
       directQueryInfo = await query
-        .info(serverIp, 7778, 2000)
+        .info(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       directPlayerInfo = await query
-        .players(serverIp, 7778, 2000)
+        .players(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       break;

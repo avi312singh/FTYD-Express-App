@@ -24,7 +24,7 @@ const transporter = nodemailer.createTransport({
   module.exports = async () => {
     try {
       const directQueryInfo = await query
-        .info(serverIp, 7778, 800)
+        .info(serverIp, 7779, 800)
         .then(query.close)
         .catch(console.error);
 

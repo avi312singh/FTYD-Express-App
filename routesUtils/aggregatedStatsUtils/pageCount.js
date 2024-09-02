@@ -16,7 +16,7 @@ module.exports = (pageFromRequest, pool) => {
       pool.getConnection((err, connection) => {
         if (err) console.log(err);
         connection.query(
-          `SELECT * FROM sys.pageCount where page='${page}'`,
+          `SELECT * FROM pageCount where page='${page}'`,
           (err, result) => {
             if (err) console.log(err);
             return err

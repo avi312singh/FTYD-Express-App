@@ -66,7 +66,13 @@ router.use(function timeLog(req, res, next) {
   const timestampForRequest = moment().format("YYYY-MM-DD HH:mm:ss");
   logger.log({
     level: "info",
-    message: `'Request received at: ', ${timestampForRequest + " from IP address: " + req.headers["x-forwarded-for"] || req.connection.remoteAddress || null}`,
+    message: `'Request received at: ', ${
+      timestampForRequest +
+        " from IP address: " +
+        req.headers["x-forwarded-for"] ||
+      req.connection.remoteAddress ||
+      null
+    }`,
   });
   next();
 });
@@ -169,11 +175,9 @@ router.get("/pageCount", async (req, res) => {
 router.put("/pageCount", async (req, res) => {
   pageCountPutUtil(req.query.page, pool)
     .then((result) => {
-      res
-        .status(200)
-        .json({
-          message: `Incremented page count for ${result.page} at aggregatedstats/pageCount PUT`,
-        });
+      res.status(200).json({
+        message: `Incremented page count for ${result.page} at aggregatedstats/pageCount PUT`,
+      });
       console.log(
         chalk.blue(
           "Incremented page count for " +
