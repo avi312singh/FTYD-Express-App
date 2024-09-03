@@ -1,6 +1,6 @@
-const chalk = require("chalk");
-const query = require("source-server-query");
-const utf8 = require("utf8");
+const chalk = require('chalk');
+const query = require('source-server-query');
+const utf8 = require('utf8');
 
 function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
   for (i = 0; i < arrayToBeUtf8d.length; i++) {
@@ -15,18 +15,18 @@ function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
     let allServerInfo = [];
     try {
       directQueryInfo = await query
-        .info(serverIp, 7779, 800)
+        .info(serverIp, 7779, 8000)
         .then(query.close)
         .catch(console.error);
       directPlayerInfo = await query
-        .players(serverIp, 7779, 800)
+        .players(serverIp, 7779, 8000)
         .then(query.close)
         .catch(console.error);
 
       directQueryInfo instanceof Error
-        ? ((directQueryInfo["status"] = "offline"),
-          (directQueryInfo["playersnum"] = 0))
-        : (directQueryInfo["status"] = "online");
+        ? ((directQueryInfo['status'] = 'offline'),
+          (directQueryInfo['playersnum'] = 0))
+        : (directQueryInfo['status'] = 'online');
 
       allServerInfo.push({ directQueryInfo: directQueryInfo });
       allServerInfo.push({
@@ -36,22 +36,22 @@ function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
     } catch (error) {
       console.error(
         chalk.red(
-          "Sending default response as error has occurred whilst fetching a set of new players with error: " +
-            error,
-        ),
+          'Sending default response as error has occurred whilst fetching a set of new players with error: ' +
+            error
+        )
       );
 
       allServerInfo.push({
         directQueryInfo: {
           name: currentServerName,
           map: currentMapName,
-          folder: "chivalrymedievalwarfare",
-          game: "Chivalry: Medieval Warfare",
+          folder: 'chivalrymedievalwarfare',
+          game: 'Chivalry: Medieval Warfare',
           appid: 0,
           playersnum: 0,
           maxplayers: 64,
           botsnum: 0,
-          status: "offline",
+          status: 'offline',
         },
       });
       allServerInfo.push({ directPlayerInfo: [] });
