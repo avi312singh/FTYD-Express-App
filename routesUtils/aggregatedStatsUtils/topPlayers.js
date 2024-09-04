@@ -1,11 +1,11 @@
-module.exports = (durationFromRequest, pool) => {
+const topPlayers = (durationFromRequest, pool) => {
   return new Promise((resolve, reject) => {
     try {
       const durationCheckIfInParams = durationFromRequest
         ? durationFromRequest
         : 288;
       const duration =
-        durationCheckIfInParams !== "218"
+        durationCheckIfInParams !== '218'
           ? 288
           : parseInt(durationCheckIfInParams);
       pool.getConnection((err, connection) => {
@@ -26,7 +26,7 @@ module.exports = (durationFromRequest, pool) => {
                       // remove .map() to return with keys
                       response: result.map(Object.values),
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -34,7 +34,9 @@ module.exports = (durationFromRequest, pool) => {
         }
       });
     } catch (error) {
-      reject("Error has occurred ", error);
+      reject('Error has occurred ', error);
     }
   });
 };
+
+export default topPlayers;

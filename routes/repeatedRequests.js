@@ -1,29 +1,29 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const axios = require('axios');
-const chalk = require('chalk');
-const cron = require('node-cron');
-const schedule = require('node-schedule');
-const moment = require('moment');
-const winston = require('winston');
-const _ = require('underscore');
+import axios from 'axios';
+import chalk from 'chalk';
+import cron from 'node-cron';
+import schedule from 'node-schedule';
+import moment from 'moment';
+import winston from 'winston';
+import _ from 'underscore';
 
-const resetDailyUtil = require('../routesUtils/serverStatsUtils/resetDaily');
-const resetWeeklyUtil = require('../routesUtils/serverStatsUtils/resetWeekly');
-const resetMonthlyUtil = require('../routesUtils/serverStatsUtils/resetMonthly');
-const serverInfoUtil = require('../routesUtils/serverStatsUtils/serverInfo');
-const serverStatsUtil = require('../routesUtils/serverStatsUtils/serverStats');
-const temporaryDataUtil = require('../routesUtils/serverStatsUtils/temporaryData');
-const imageSrcUtil = require('../routesUtils/serverStatsUtils/imageSrc');
-const truncate = require('../routesUtils/repeatedRequestsUtils/truncate');
-const topPlayers = require('../routesUtils/aggregatedStatsUtils/topPlayers');
-const allRows = require('../routesUtils/dbInteractionsUtils/allRows.js');
-const steamRequest = require('../routesUtils/repeatedRequestsUtils/steamRequest');
-const steamSessionRequest = require('../routesUtils/repeatedRequestsUtils/steamSessionIdRequest');
-const serverStatus = require('../routesUtils/repeatedRequestsUtils/serverStatus');
-const playerCountAlert = require('../routesUtils/repeatedRequestsUtils/playerCountAlert');
+import resetDailyUtil from '../routesUtils/serverStatsUtils/resetDaily.js';
+import resetWeeklyUtil from '../routesUtils/serverStatsUtils/resetWeekly.js';
+import resetMonthlyUtil from '../routesUtils/serverStatsUtils/resetMonthly.js';
+import serverInfoUtil from '../routesUtils/serverStatsUtils/serverInfo.js';
+import serverStatsUtil from '../routesUtils/serverStatsUtils/serverStats.js';
+import temporaryDataUtil from '../routesUtils/serverStatsUtils/temporaryData.js';
+import imageSrcUtil from '../routesUtils/serverStatsUtils/imageSrc.js';
+import truncate from '../routesUtils/repeatedRequestsUtils/truncate.js';
+import topPlayers from '../routesUtils/aggregatedStatsUtils/topPlayers.js';
+import allRows from '../routesUtils/dbInteractionsUtils/allRows.js';
+import steamRequest from '../routesUtils/repeatedRequestsUtils/steamRequest.js';
+import steamSessionRequest from '../routesUtils/repeatedRequestsUtils/steamSessionIdRequest.js';
+import serverStatus from '../routesUtils/repeatedRequestsUtils/serverStatus.js';
+import playerCountAlert from '../routesUtils/repeatedRequestsUtils/playerCountAlert.js';
 
-const pool = require('../db/db');
+import pool from '../db/db.js';
 
 const serverIp =
   process.env.SERVERIP ||
@@ -300,6 +300,12 @@ router.get('/', async (req, res) => {
       { rule: '*/15 * * * * *' },
       async (fireDate) => {
         const serverInfoUnfiltered = await getNewPlayers();
+        console.log(serverInfoUnfiltered);
+        console.log(
+          'Player Information:',
+          JSON.stringify(serverInfoUnfiltered[1].directPlayerInfo, null, 2)
+        );
+
         const serverInfo = serverInfoUnfiltered
           .map((element) => element.directQueryInfo)
           .filter((el) => el != null);
@@ -367,7 +373,7 @@ router.get('/', async (req, res) => {
           secondJob.cancel(true);
         }
 
-        for (i = 0; i < playersInfo.length; i++) {
+        for (let i = 0; i < playersInfo.length; i++) {
           if (!playersInfo[i] || !playersInfo[i].name) {
             console.error('PlayersInfo at index ' + [i] + ' has been skipped');
           } else {
@@ -457,7 +463,7 @@ router.get('/', async (req, res) => {
           ? playersInfoUnfiltered.filter((el) => el.name !== '' || undefined)
           : secondJob.cancel(true);
 
-        for (i = 0; i < playersInfo.length; i++) {
+        for (let i = 0; i < playersInfo.length; i++) {
           temporaryDataUtil(
             encodeURIComponent(playersInfo[i].name),
             playersInfo[i].duration,
@@ -706,4 +712,4 @@ router.get('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

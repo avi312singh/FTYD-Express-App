@@ -1,24 +1,27 @@
-const mysql = require("mysql");
+import dotenv from 'dotenv';
+dotenv.config();
+
+import mysql from 'mysql2/promise';
 
 const dbHost =
   process.env.DBENDPOINT ||
   (() => {
-    new Error("Provide a db endpoint in env vars");
+    new Error('Provide a db endpoint in env vars');
   });
 const dbPassword =
   process.env.DBPASSWORD ||
   (() => {
-    new Error("Provide a db password in env vars");
+    new Error('Provide a db password in env vars');
   });
 const dbUsername =
   process.env.DBUSER ||
   (() => {
-    new Error("Provide a db username in env vars");
+    new Error('Provide a db username in env vars');
   });
 const dbName =
   process.env.DBNAME ||
   (() => {
-    new Error("Provide a db username in env vars");
+    new Error('Provide a db username in env vars');
   });
 
 const pool = mysql.createPool({
@@ -27,6 +30,10 @@ const pool = mysql.createPool({
   user: dbUsername,
   password: dbPassword,
   database: dbName,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  dateStrings: ['DATE', 'DATETIME'],
 });
 
-module.exports = pool;
+export default pool;

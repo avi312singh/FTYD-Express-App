@@ -1,12 +1,12 @@
-const query = require("source-server-query");
-const axios = require("axios");
+import query from 'source-server-query';
+import axios from 'axios';
 
 const serverRestartConfig = {
-  method: "post",
-  url: "https://billing.time4vps.com/api/server/144002/reboot",
+  method: 'post',
+  url: 'https://billing.time4vps.com/api/server/144002/reboot',
   headers: {
     Authorization: process.env.AUTHORIZATION,
-    Cookie: "__cfduid=d2e88590e27d1f2c0a6bf0ca2d9b6b7391608573389",
+    Cookie: '__cfduid=d2e88590e27d1f2c0a6bf0ca2d9b6b7391608573389',
   },
 };
 
@@ -15,100 +15,100 @@ async function restartServer(queryName) {
   const serverIp =
     process.env.SERVERIP ||
     (() => {
-      new Error("Provide a server IP in env vars");
+      new Error('Provide a server IP in env vars');
     });
 
-  console.log("server to be restarted is ", queryName[0]);
+  console.log('server to be restarted is ', queryName[0]);
   switch (queryName[0]) {
-    case "main":
+    case 'main':
       directQueryInfo = query
         .info(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       break;
-    case "Main":
+    case 'Main':
       directQueryInfo = query
         .info(serverIp, 7779, 2000)
         .then(query.close)
         .catch(console.log);
       break;
-    case "test":
+    case 'test':
       directQueryInfo = query
         .info(serverIp, 7783, 2000)
         .then(query.close)
         .catch(console.log);
       break;
-    case "Test":
+    case 'Test':
       directQueryInfo = query
         .info(serverIp, 7783, 2000)
         .then(query.close)
         .catch(console.log);
       break;
     default:
-      throw new Error(queryName[0] + "is not recognised");
+      throw new Error(queryName[0] + 'is not recognised');
   }
 
   return directQueryInfo;
 }
 
 module.exports = {
-  name: "!server_restart",
-  description: "Restarts a server!",
+  name: '!server_restart',
+  description: 'Restarts a server!',
   execute(msg, args) {
     console.log(args);
     restartServer(args)
       .then((resolve) => {
         msg.channel.send(
-          "*********** SERVER INFORMATION AS OF CURRENTLY ***********",
+          '*********** SERVER INFORMATION AS OF CURRENTLY ***********'
         );
         if (resolve.name !== undefined) {
           msg.reply(
             args[0].charAt(0).toUpperCase() +
               args[0].slice(1) +
-              " server is online",
+              ' server is online'
           );
           msg.reply(
             resolve.name +
-              " is running map " +
+              ' is running map ' +
               resolve.map +
-              " and has " +
+              ' and has ' +
               resolve.playersnum +
-              " players with " +
+              ' players with ' +
               resolve.botsnum +
-              " of those being bots",
+              ' of those being bots'
           );
           msg.reply(
-            "************************************************************",
+            '************************************************************'
           );
           resolve.playersnum > 0
             ? msg.reply(
-                "Are you sure you want to restart server with " +
+                'Are you sure you want to restart server with ' +
                   resolve.playersnum +
-                  " players?",
+                  ' players?'
               )
             : console.log(
-                "No players so no need to ask again for server restart confirmation",
+                'No players so no need to ask again for server restart confirmation'
               );
           msg.reply(
-            "Click on the thumbs up emoji at the initial *** server_restart *** command to ** CONFIRM ** the restart or thumbs down to cancel restart",
+            'Click on the thumbs up emoji at the initial *** server_restart *** command to ** CONFIRM ** the restart or thumbs down to cancel restart'
           );
 
-          msg.react("👍");
+          msg.react('👍');
 
           const filter = (reaction, user) => {
             return (
-              ["👍", "👎"].includes(reaction.emoji.name) &&
+              ['👍', '👎'].includes(reaction.emoji.name) &&
               user.id === msg.author.id
             );
           };
 
           msg
-            .awaitReactions(filter, { max: 1, time: 30000, errors: ["time"] })
+            .awaitReactions(filter, { max: 1, time: 30000, errors: ['time'] })
             .then((collected) => {
               const reaction = collected.first();
-              if (reaction.emoji.name === "👍") {
+              if (reaction.emoji.name === '👍') {
                 msg.reply(
-                  "You reacted with a thumbs up. ** Attempting ** to Restarting server",
+                  'You reacted with a thumbs up. ** Attempting ** to Restarting server'
                 );
 
                 axios(serverRestartConfig)
@@ -118,41 +118,39 @@ module.exports = {
                       response.status == 200 &&
                       response.data.task_id != undefined
                     )
-                      msg.reply("Server restart successful! Please wait");
+                      msg.reply('Server restart successful! Please wait');
                   })
                   .catch((error) => {
                     console.log(error);
                   });
               } else {
                 msg.reply(
-                  "You reacted with thumbs down. ** Cancelling restart **",
+                  'You reacted with thumbs down. ** Cancelling restart **'
                 );
               }
             })
             .catch((collected) => {
-              msg.reply("Error ** Cancelling restart **", collected);
-              console.error("Error", collected);
+              msg.reply('Error ** Cancelling restart **', collected);
+              console.error('Error', collected);
             });
         } else
           msg.reply(
             args[0].charAt(0).toUpperCase() +
               args[0].slice(1) +
-              " server is not online",
+              ' server is not online'
           );
       })
       .catch((error) => {
         console.error(error);
-        if (error === "is not recognised")
+        if (error === 'is not recognised')
           return msg.reply(
-            args[0].charAt(0).toUpperCase() +
-              args[0].slice(1) +
-              " is not ours!",
+            args[0].charAt(0).toUpperCase() + args[0].slice(1) + ' is not ours!'
           );
         else
           msg.reply(
             args[0].charAt(0).toUpperCase() +
               args[0].slice(1) +
-              " is not online yet!",
+              ' is not online yet!'
           );
       });
   },

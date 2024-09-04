@@ -1,21 +1,21 @@
-const pool = require("../../db/db");
+import pool from '../../db/db.js';
 
-module.exports = (encodedNameToBeStored, imageSrcFromRequest) => {
+const imageSrc = (encodedNameToBeStored, imageSrcFromRequest) => {
   return new Promise((resolve, reject) => {
     try {
       if (encodedNameToBeStored) {
         pool.getConnection((err, connection) => {
           const name = decodeURIComponent(encodedNameToBeStored);
-          const imageSrc = imageSrcFromRequest ? imageSrcFromRequest : "";
+          const imageSrc = imageSrcFromRequest ? imageSrcFromRequest : '';
           const imageSrcFull =
-            imageSrc.includes("_medium.jpg") &&
-            imageSrc.replace("_medium.jpg", "_full.jpg");
+            imageSrc.includes('_medium.jpg') &&
+            imageSrc.replace('_medium.jpg', '_full.jpg');
           console.log(
-            "Sending unencoded name " +
+            'Sending unencoded name ' +
               name +
-              " imageSrc " +
+              ' imageSrc ' +
               imageSrcFull +
-              " to database",
+              ' to database'
           );
           if (err) console.log(err);
           connection.query(
@@ -30,19 +30,21 @@ module.exports = (encodedNameToBeStored, imageSrcFromRequest) => {
                     imageSrc: imageSrcFull,
                     // , result: result
                   });
-            },
+            }
           );
         });
-      } else reject("Please enter name and image src in query params");
+      } else reject('Please enter name and image src in query params');
     } catch (error) {
       return reject(
-        "Error has occurred during getting the imagesrc: " +
+        'Error has occurred during getting the imagesrc: ' +
           imageSrcFromRequest +
-          " and encoded name to be stored " +
+          ' and encoded name to be stored ' +
           encodedNameToBeStored +
-          ": " +
-          error,
+          ': ' +
+          error
       );
     }
   });
 };
+
+export default imageSrc;

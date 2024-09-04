@@ -1,14 +1,14 @@
-module.exports = (durationFromRequest, pool) => {
+const duration = (durationFromRequest, pool) => {
   return new Promise((resolve, reject) => {
     try {
       const durationCheckIfInParams = durationFromRequest
         ? durationFromRequest
         : 288;
       const duration =
-        durationCheckIfInParams !== "2016" &&
-        durationCheckIfInParams !== "8760" &&
-        durationCheckIfInParams !== "666" &&
-        durationCheckIfInParams !== "999"
+        durationCheckIfInParams !== '2016' &&
+        durationCheckIfInParams !== '8760' &&
+        durationCheckIfInParams !== '666' &&
+        durationCheckIfInParams !== '999'
           ? 288
           : parseInt(durationCheckIfInParams);
       pool.getConnection((err, connection) => {
@@ -26,7 +26,7 @@ module.exports = (durationFromRequest, pool) => {
                       duration,
                       response: result,
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -43,7 +43,7 @@ module.exports = (durationFromRequest, pool) => {
                       duration,
                       response: result,
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -60,7 +60,7 @@ module.exports = (durationFromRequest, pool) => {
                       duration,
                       response: result,
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -77,7 +77,7 @@ module.exports = (durationFromRequest, pool) => {
                       duration,
                       response: result,
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -88,7 +88,7 @@ module.exports = (durationFromRequest, pool) => {
               `SELECT SUM(totalTimeDaily), SUM(totalTimeWeekly), SUM(totalTimeMonthly), SUM(totalTime) FROM playerInfo;`,
               (err, result) => {
                 if (err) console.log(err);
-                const durations = ["Today", "Week", "Month", "All"];
+                const durations = ['Today', 'Week', 'Month', 'All'];
                 return err
                   ? reject(err)
                   : resolve({
@@ -100,7 +100,7 @@ module.exports = (durationFromRequest, pool) => {
                         };
                       }),
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -108,7 +108,9 @@ module.exports = (durationFromRequest, pool) => {
         }
       });
     } catch (error) {
-      reject("Error has occurred ", error);
+      reject('Error has occurred ', error);
     }
   });
 };
+
+export default duration;

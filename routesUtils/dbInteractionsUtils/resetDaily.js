@@ -1,6 +1,6 @@
-const pool = require("../../db/db");
+import pool from '../../db/db.js';
 
-module.exports = (chalk, keyword) => {
+const resetDaily = (chalk, keyword) => {
   return new Promise((resolve, reject) => {
     try {
       pool.getConnection((err, connection) => {
@@ -13,15 +13,15 @@ module.exports = (chalk, keyword) => {
             return err
               ? reject(err)
               : resolve(
-                  "Reset totalKillsDaily, totalPointsSpentDaily, totalTimeDaily to 0",
+                  'Reset totalKillsDaily, totalPointsSpentDaily, totalTimeDaily to 0'
                 );
-          },
+          }
         );
         console.log(
           chalk.blue(
-            "Reset totalKillsDaily, totalPointsSpentDaily, totalTimeDaily to " +
-              chalk.whiteBright.underline(keyword("0")),
-          ),
+            'Reset totalKillsDaily, totalPointsSpentDaily, totalTimeDaily to ' +
+              chalk.whiteBright.underline(keyword('0'))
+          )
         );
         if (err) throw err;
       });
@@ -30,3 +30,5 @@ module.exports = (chalk, keyword) => {
     }
   });
 };
+
+export default resetDaily;

@@ -1,6 +1,6 @@
-const pool = require("../../db/db");
+import pool from '../../db/db.js';
 
-module.exports = (tableName, recognisedTableNames) => {
+const allRows = (tableName, recognisedTableNames) => {
   return new Promise((resolve, reject) => {
     try {
       if (tableName) {
@@ -17,18 +17,20 @@ module.exports = (tableName, recognisedTableNames) => {
                   : resolve({
                       rows,
                     });
-              },
+              }
             );
             if (err) throw err;
           });
         } else {
-          reject("Please provide a valid tableName");
+          reject('Please provide a valid tableName');
         }
       } else {
-        reject("Please provide tableName in query params");
+        reject('Please provide tableName in query params');
       }
     } catch (error) {
-      reject("Error has occurred ", error);
+      reject('Error has occurred ', error);
     }
   });
 };
+
+export default allRows;

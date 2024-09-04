@@ -1,11 +1,11 @@
-module.exports = (durationFromRequest, pool) => {
+const playerCount = (durationFromRequest, pool) => {
   return new Promise((resolve, reject) => {
     try {
       const durationCheckIfInParams = durationFromRequest
         ? durationFromRequest
         : 288;
       const duration =
-        durationCheckIfInParams !== "2016" && durationCheckIfInParams !== "8760"
+        durationCheckIfInParams !== '2016' && durationCheckIfInParams !== '8760'
           ? 288
           : parseInt(durationCheckIfInParams);
       pool.getConnection((err, connection) => {
@@ -33,7 +33,7 @@ module.exports = (durationFromRequest, pool) => {
                       duration,
                       response: result,
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -56,7 +56,7 @@ module.exports = (durationFromRequest, pool) => {
                       duration,
                       response: result,
                     });
-              },
+              }
             );
             connection.release();
             if (err) throw err;
@@ -64,7 +64,9 @@ module.exports = (durationFromRequest, pool) => {
         }
       });
     } catch (error) {
-      reject("Error has occurred ", error);
+      reject('Error has occurred ', error);
     }
   });
 };
+
+export default playerCount;

@@ -1,12 +1,13 @@
-const pool = require("../../db/db");
+import pool from '../../db/db.js';
+
 const undefinedCheck = (objectToCheck, ifUndefined) =>
   objectToCheck == undefined ? ifUndefined : objectToCheck;
 
-module.exports = (
+const storeServerInfo = (
   playerCountToBeStored,
   botCountToBeStored,
   serverNameToBeStored,
-  mapNameToBeStored,
+  mapNameToBeStored
 ) => {
   return new Promise((resolve, reject) => {
     try {
@@ -19,7 +20,13 @@ module.exports = (
         pool.getConnection((err, connection) => {
           if (err) console.error(err);
           connection.query(
-            `INSERT INTO serverInfo (playerCount, botCount, serverName, mapName) VALUES (${undefinedCheck(playerCountToBeStored, 0)}, ${undefinedCheck(botCountToBeStored, 0)}, '${undefinedCheck(serverNameToBeStored, "Not Online")}', '${undefinedCheck(mapNameToBeStored, "Not Online")}')`,
+            `INSERT INTO serverInfo (playerCount, botCount, serverName, mapName) VALUES (${undefinedCheck(
+              playerCountToBeStored,
+              0
+            )}, ${undefinedCheck(botCountToBeStored, 0)}, '${undefinedCheck(
+              serverNameToBeStored,
+              'Not Online'
+            )}', '${undefinedCheck(mapNameToBeStored, 'Not Online')}')`,
             (err, result, fields) => {
               connection.release();
               return err
@@ -29,14 +36,13 @@ module.exports = (
                     botCount: botCountToBeStored,
                     serverName: serverNameToBeStored,
                     mapName: mapNameToBeStored,
-                    // , result: result
                   });
-            },
+            }
           );
         });
       } else {
         return reject(
-          "Please provide playerCount, botCount, serverName and mapName in query params",
+          'Please provide playerCount, botCount, serverName and mapName in query params'
         );
       }
     } catch (error) {
@@ -44,3 +50,5 @@ module.exports = (
     }
   });
 };
+
+export default storeServerInfo;

@@ -1,11 +1,11 @@
-const pool = require("../../db/db");
+import pool from '../../db/db.js';
 
-module.exports = (encodedNameToBeStored, killsToBeStored) => {
+const kills = (encodedNameToBeStored, killsToBeStored) => {
   return new Promise((resolve, reject) => {
     try {
       if (encodedNameToBeStored && killsToBeStored) {
         if (isNaN(killsToBeStored)) {
-          reject("Kills needs to be a number");
+          reject('Kills needs to be a number');
         }
         pool.getConnection((err, connection) => {
           const name = decodeURIComponent(encodedNameToBeStored);
@@ -28,12 +28,14 @@ module.exports = (encodedNameToBeStored, killsToBeStored) => {
                     online: true,
                     // , result: result
                   });
-            },
+            }
           );
         });
-      } else reject("Please enter name and kills in query params");
+      } else reject('Please enter name and kills in query params');
     } catch (error) {
       return reject(error);
     }
   });
 };
+
+export default kills;

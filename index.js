@@ -1,23 +1,15 @@
-require('dotenv').config();
-// require('events').EventEmitter.defaultMaxListeners = 25;
-const Discord = require('discord.js');
-const bot = new Discord.Client();
-bot.commands = new Discord.Collection();
-const botCommands = require('./commands');
-const express = require('express');
-const basicAuth = require('express-basic-auth');
-const helmet = require('helmet');
-const cors = require('cors');
-const http = require('http');
+import dotenv from 'dotenv';
+dotenv.config();
 
-const serverStats = require('./routes/serverstats');
-const aggregatedStats = require('./routes/aggregatedstats');
-const repeatedRequests = require('./routes/repeatedRequests');
-const dbInteractions = require('./routes/dbInteractions');
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import http from 'http';
 
-Object.keys(botCommands).map((key) => {
-  bot.commands.set(botCommands[key].name, botCommands[key]);
-});
+import serverStats from './routes/serverstats.js';
+import aggregatedStats from './routes/aggregatedstats.js';
+import repeatedRequests from './routes/repeatedRequests.js';
+import dbInteractions from './routes/dbInteractions.js';
 
 const basicAuthUsername =
   process.env.BASICAUTHUSERNAME ||
@@ -54,50 +46,7 @@ app.get('/', function (request, response) {
 app.use(cors());
 app.use(helmet());
 
-// app.use(
-//   basicAuth({
-//     users: {
-//       avi312: basicAuthPassword,
-//     },
-//     unauthorizedResponse: {
-//       message: 'Bad credentials',
-//     },
-//     challenge: true,
-//   })
-// );
-
 app.use('/serverStats', serverStats);
 app.use('/aggregatedStats', aggregatedStats);
 app.use('/repeatedRequests', repeatedRequests);
 app.use('/dbInteractions', dbInteractions);
-
-// //For avoiding Heroku $PORT error
-// app.get('/', function (request, response) {
-//   const result = 'App is running'
-//   response.status(200).json({ status: result });
-// }).listen(app.get('port'), function () {
-//   console.log('App is running, server is listening on port ', app.get('port'));
-// });
-
-// const TOKEN = process.env.TOKEN;
-// bot.login(TOKEN);
-
-// bot.on('ready', () => {
-//   console.info(`Logged in as ${bot.user.tag}!`);
-// });
-
-// bot.on('message', (msg) => {
-//   if (!msg.content.startsWith('!')) return;
-//   const args = msg.content.split(/ +/);
-//   const command = args.shift().toLowerCase();
-//   console.info(`Called command: ${command}`);
-
-//   if (!bot.commands.has(command)) return;
-
-//   try {
-//     bot.commands.get(command).execute(msg, args);
-//   } catch (error) {
-//     console.error(error);
-//     msg.reply('there was an error trying to execute that command!');
-//   }
-// });

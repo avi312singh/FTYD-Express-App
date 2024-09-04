@@ -1,97 +1,104 @@
-const express = require("express");
-const router = express.Router();
-const mysql = require("mysql");
-const chalk = require("chalk");
-const moment = require("moment");
-const winston = require("winston");
+import dotenv from 'dotenv';
+dotenv.config();
 
-const playerCountUtil = require("../routesUtils/aggregatedStatsUtils/playerCount");
-const killCountUtil = require("../routesUtils/aggregatedStatsUtils/killCount");
-const durationUtil = require("../routesUtils/aggregatedStatsUtils/duration");
-const topPlayersUtil = require("../routesUtils/aggregatedStatsUtils/topPlayers");
-const pageCountUtil = require("../routesUtils/aggregatedStatsUtils/pageCount");
-const pageCountPutUtil = require("../routesUtils/aggregatedStatsUtils/pageCountPut");
+import express from 'express';
+import mysql from 'mysql2/promise';
+import chalk from 'chalk';
+import moment from 'moment';
+import winston from 'winston';
+
+import playerCountUtil from '../routesUtils/aggregatedStatsUtils/playerCount.js';
+import killCountUtil from '../routesUtils/aggregatedStatsUtils/killCount.js';
+import durationUtil from '../routesUtils/aggregatedStatsUtils/duration.js';
+import topPlayersUtil from '../routesUtils/aggregatedStatsUtils/topPlayers.js';
+import pageCountUtil from '../routesUtils/aggregatedStatsUtils/pageCount.js';
+import pageCountPutUtil from '../routesUtils/aggregatedStatsUtils/pageCountPut.js';
+
+const router = express.Router();
 
 const dbHost =
   process.env.DBENDPOINT ||
   (() => {
-    new Error("Provide a db endpoint in env vars");
-  });
+    throw new Error('Provide a db endpoint in env vars');
+  })();
 const dbPassword =
   process.env.DBPASSWORD ||
   (() => {
-    new Error("Provide a db password in env vars");
-  });
+    throw new Error('Provide a db password in env vars');
+  })();
 const dbUsername =
   process.env.DBUSER ||
   (() => {
-    new Error("Provide a db username in env vars");
-  });
+    throw new Error('Provide a db username in env vars');
+  })();
 const dbName =
   process.env.DBNAME ||
   (() => {
-    new Error("Provide a db username in env vars");
-  });
+    throw new Error('Provide a db name in env vars');
+  })();
 
-const dir = "./logging/";
+const dir = './logging/';
 
 const logger = winston.createLogger({
-  level: "info",
+  level: 'info',
   format: winston.format.json(),
-  defaultMeta: { service: "user-service" },
+  defaultMeta: { service: 'user-service' },
   transports: [
     new winston.transports.File({
       filename: `${dir}logging.log`,
-      level: "info",
+      level: 'info',
       maxsize: 7000,
     }),
     new winston.transports.File({
       filename: `${dir}error.log`,
-      level: "error",
+      level: 'error',
     }),
   ],
 });
 
 const pool = mysql.createPool({
-  connectionLimit: 5,
+  connectionLimit: 40,
   host: dbHost,
   user: dbUsername,
   password: dbPassword,
   database: dbName,
-  dateStrings: ["DATE", "DATETIME"],
+  waitForConnections: true,
+  queueLimit: 0,
+  dateStrings: ['DATE', 'DATETIME'],
 });
 
-// middleware that is specific to this router
+// Middleware that is specific to this router
 router.use(function timeLog(req, res, next) {
-  const timestampForRequest = moment().format("YYYY-MM-DD HH:mm:ss");
+  const timestampForRequest = moment().format('YYYY-MM-DD HH:mm:ss');
   logger.log({
-    level: "info",
+    level: 'info',
     message: `'Request received at: ', ${
       timestampForRequest +
-        " from IP address: " +
-        req.headers["x-forwarded-for"] ||
+        ' from IP address: ' +
+        req.headers['x-forwarded-for'] ||
       req.connection.remoteAddress ||
       null
     }`,
   });
   next();
 });
-// define the home page route
-router.get("/", async (req, res) => {
-  const timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
-  res.status(200).json({ message: "Seems to be ok.. ", timestamp });
+
+// Define the home page route
+router.get('/', async (req, res) => {
+  const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+  res.status(200).json({ message: 'Seems to be ok.. ', timestamp });
 });
 
-router.get("/playerCount", async (req, res) => {
+router.get('/playerCount', async (req, res) => {
   playerCountUtil(req.query.duration, pool)
     .then((result) => {
       res.status(200).json({ result });
       console.log(
         chalk.blue(
-          "Completed query for " +
+          'Completed query for ' +
             chalk.whiteBright.underline(result.duration) +
-            " records at aggregatedstats/playerCount GET",
-        ),
+            ' records at aggregatedstats/playerCount GET'
+        )
       );
     })
     .catch((result) => {
@@ -100,16 +107,16 @@ router.get("/playerCount", async (req, res) => {
     });
 });
 
-router.get("/killCount", async (req, res) => {
+router.get('/killCount', async (req, res) => {
   killCountUtil(req.query.duration, pool)
     .then((result) => {
       res.status(200).json({ result });
       console.log(
         chalk.blue(
-          "Completed query for " +
+          'Completed query for ' +
             chalk.whiteBright.underline(result.duration) +
-            " records at aggregatedstats/killCount GET",
-        ),
+            ' records at aggregatedstats/killCount GET'
+        )
       );
     })
     .catch((result) => {
@@ -118,16 +125,16 @@ router.get("/killCount", async (req, res) => {
     });
 });
 
-router.get("/duration", async (req, res) => {
+router.get('/duration', async (req, res) => {
   durationUtil(req.query.duration, pool)
     .then((result) => {
       res.status(200).json({ result });
       console.log(
         chalk.blue(
-          "Completed query for " +
+          'Completed query for ' +
             chalk.whiteBright.underline(result.duration) +
-            " records at aggregatedstats/duration GET",
-        ),
+            ' records at aggregatedstats/duration GET'
+        )
       );
     })
     .catch((result) => {
@@ -136,16 +143,16 @@ router.get("/duration", async (req, res) => {
     });
 });
 
-router.get("/topPlayers", async (req, res) => {
+router.get('/topPlayers', async (req, res) => {
   topPlayersUtil(req.query.duration, pool)
     .then((result) => {
       res.status(200).json({ result });
       console.log(
         chalk.blue(
-          "Completed query for " +
+          'Completed query for ' +
             chalk.whiteBright.underline(result.duration) +
-            " records at aggregatedstats/topPlayers GET",
-        ),
+            ' records at aggregatedstats/topPlayers GET'
+        )
       );
     })
     .catch((result) => {
@@ -154,16 +161,16 @@ router.get("/topPlayers", async (req, res) => {
     });
 });
 
-router.get("/pageCount", async (req, res) => {
+router.get('/pageCount', async (req, res) => {
   pageCountUtil(req.query.page, pool)
     .then((result) => {
       res.status(200).json({ result });
       console.log(
         chalk.blue(
-          "Got page count for " +
+          'Got page count for ' +
             chalk.whiteBright.underline(result.page) +
-            " at aggregatedstats/pageCount GET",
-        ),
+            ' at aggregatedstats/pageCount GET'
+        )
       );
     })
     .catch((result) => {
@@ -172,7 +179,7 @@ router.get("/pageCount", async (req, res) => {
     });
 });
 
-router.put("/pageCount", async (req, res) => {
+router.put('/pageCount', async (req, res) => {
   pageCountPutUtil(req.query.page, pool)
     .then((result) => {
       res.status(200).json({
@@ -180,10 +187,10 @@ router.put("/pageCount", async (req, res) => {
       });
       console.log(
         chalk.blue(
-          "Incremented page count for " +
+          'Incremented page count for ' +
             chalk.whiteBright.underline(result.page) +
-            " at aggregatedstats/pageCount PUT",
-        ),
+            ' at aggregatedstats/pageCount PUT'
+        )
       );
     })
     .catch((result) => {
@@ -192,4 +199,4 @@ router.put("/pageCount", async (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

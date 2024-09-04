@@ -1,6 +1,6 @@
-const pool = require("../../db/db");
+import pool from '../../db/db.js';
 
-module.exports = (encodedNameToBeStored, pointsSpentToBeStored) => {
+const pointsSpent = (encodedNameToBeStored, pointsSpentToBeStored) => {
   return new Promise((resolve, reject) => {
     try {
       if (encodedNameToBeStored && pointsSpentToBeStored) {
@@ -22,12 +22,14 @@ module.exports = (encodedNameToBeStored, pointsSpentToBeStored) => {
                     online: true,
                     // , result: result
                   });
-            },
+            }
           );
         });
-      } else reject("Please enter name and points spent in query params");
+      } else reject('Please enter name and points spent in query params');
     } catch (error) {
       return reject(error);
     }
   });
 };
+
+export default pointsSpent;

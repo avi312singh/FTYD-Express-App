@@ -1,6 +1,6 @@
-const pool = require("../../db/db");
+import pool from '../../db/db.js';
 
-module.exports = () => {
+const resetWeekly = () => {
   return new Promise((resolve, reject) => {
     try {
       pool.getConnection((err, connection) => {
@@ -10,7 +10,7 @@ module.exports = () => {
           (err, result) => {
             connection.release();
             return err ? reject(err) : resolve();
-          },
+          }
         );
       });
     } catch (error) {
@@ -18,3 +18,5 @@ module.exports = () => {
     }
   });
 };
+
+export default resetWeekly;

@@ -1,11 +1,12 @@
 {
   "name": "ftyd-statistics",
   "version": "2.0.0",
-  "description": "Discord bot and statistics generator for chivalry (source) server",
+  "description": "Statistics generator for chivalry (source) server",
   "main": "index.js",
   "engines": {
-    "node": "v16.20.0"
+    "node": ">=22.8.0"
   },
+  "type": "module",
   "scripts": {
     "start": "node --trace-warnings index.js",
     "start-dev": "nodemon index.js",
@@ -14,31 +15,29 @@
   "author": "Aviraj Mandair",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.26.1",
-    "chalk": "^4.1.2",
-    "cheerio": "^1.0.0-rc.10",
-    "cookie": "^0.5.0",
+    "axios": "^1.7.7",
+    "chalk": "^5.3.0",
+    "cheerio": "^1.0.0",
+    "cookie": "^0.6.0",
     "cors": "^2.8.5",
-    "discord.js": "^12.5.1",
-    "dotenv": "^16.0.0",
-    "express": "^4.17.3",
-    "express-basic-auth": "^1.2.1",
-    "helmet": "^5.0.2",
-    "moment": "^2.29.3",
-    "mysql": "^2.18.1",
-    "node-cron": "^3.0.0",
-    "node-schedule": "^2.1.0",
-    "nodemailer": "^6.7.3",
-    "source-server-query": "^3.0.3",
-    "underscore": "^1.13.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "moment": "^2.30.1",
+    "mysql2": "^3.11.0",
+    "node-cron": "^3.0.3",
+    "node-schedule": "^2.1.1",
+    "nodemailer": "^6.9.15",
+    "source-server-query": "^1.0.1",
+    "underscore": "^1.13.7",
     "utf8": "^3.0.0",
-    "winston": "^3.7.2"
+    "winston": "^3.14.2"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "jest": "^27.5.1",
-    "nodemon": "^2.0.15",
-    "supertest": "^6.2.2"
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4",
+    "supertest": "^7.0.0"
   },
   "jest": {
     "testEnvironment": "node",

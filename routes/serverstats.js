@@ -1,17 +1,17 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const chalk = require('chalk');
-const moment = require('moment');
-const winston = require('winston');
+import chalk from 'chalk';
+import moment from 'moment';
+import winston from 'winston';
 
-const lastLoginUtil = require('../routesUtils/serverStatsUtils/lastLogin');
-const killsUtil = require('../routesUtils/serverStatsUtils/kills');
-const pointsSpentUtil = require('../routesUtils/serverStatsUtils/pointsSpent');
-const imageSrcUtil = require('../routesUtils/serverStatsUtils/imageSrc');
-const serverStatsUtil = require('../routesUtils/serverStatsUtils/serverStats');
-const temporaryDataUtil = require('../routesUtils/serverStatsUtils/temporaryData');
+import lastLoginUtil from '../routesUtils/serverStatsUtils/lastLogin.js';
+import killsUtil from '../routesUtils/serverStatsUtils/kills.js';
+import pointsSpentUtil from '../routesUtils/serverStatsUtils/pointsSpent.js';
+import imageSrcUtil from '../routesUtils/serverStatsUtils/imageSrc.js';
+import serverStatsUtil from '../routesUtils/serverStatsUtils/serverStats.js';
+import temporaryDataUtil from '../routesUtils/serverStatsUtils/temporaryData.js';
 
-const pool = require('../db/db');
+import pool from '../db/db.js';
 
 const serverIp =
   process.env.SERVERIP ||
@@ -229,4 +229,4 @@ router.post('/temporaryData', async (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;
