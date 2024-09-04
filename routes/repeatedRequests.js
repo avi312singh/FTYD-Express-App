@@ -377,30 +377,29 @@ router.get('/', async (req, res) => {
           if (!playersInfo[i] || !playersInfo[i].name) {
             console.error('PlayersInfo at index ' + [i] + ' has been skipped');
           } else {
-            temporaryDataUtil(
-              encodeURIComponent(playersInfo[i].name),
-              playersInfo[i].duration,
-              playersInfo[i].score,
-              'playersComparisonFirst',
-              recognisedTemporaryTableNames
-            )
-              .then((result) => {
-                console.log(
-                  chalk.blue(
-                    'Database entry ' +
-                      chalk.whiteBright.underline(keyword(result.name)) +
-                      ' with duration ' +
-                      chalk.whiteBright.underline(keyword(result.time)) +
-                      ' and score ' +
-                      chalk.whiteBright.underline(keyword(result.score)) +
-                      ' added into ' +
-                      result.tableName
-                  )
-                );
-              })
-              .catch((result) => {
-                console.log(chalk.red(result));
-              });
+            try {
+              const result = await temporaryDataUtil(
+                encodeURIComponent(playersInfo[i].name),
+                playersInfo[i].duration,
+                playersInfo[i].score,
+                'playersComparisonFirst',
+                recognisedTemporaryTableNames
+              );
+              console.log(
+                chalk.blue(
+                  'Database entry ' +
+                    chalk.whiteBright.underline(keyword(result.name)) +
+                    ' with duration ' +
+                    chalk.whiteBright.underline(keyword(result.time)) +
+                    ' and score ' +
+                    chalk.whiteBright.underline(keyword(result.score)) +
+                    ' added into ' +
+                    result.tableName
+                )
+              );
+            } catch (error) {
+              console.error('Error during data insertion:', error.message);
+            }
           }
         }
 
@@ -464,30 +463,29 @@ router.get('/', async (req, res) => {
           : secondJob.cancel(true);
 
         for (let i = 0; i < playersInfo.length; i++) {
-          temporaryDataUtil(
-            encodeURIComponent(playersInfo[i].name),
-            playersInfo[i].duration,
-            playersInfo[i].score,
-            'playersComparisonSecond',
-            recognisedTemporaryTableNames
-          )
-            .then((result) => {
-              console.log(
-                chalk.blue(
-                  'Database entry ' +
-                    chalk.whiteBright.underline(keyword(result.name)) +
-                    ' with duration ' +
-                    chalk.whiteBright.underline(keyword(result.time)) +
-                    ' and score ' +
-                    chalk.whiteBright.underline(keyword(result.score)) +
-                    ' added into ' +
-                    result.tableName
-                )
-              );
-            })
-            .catch((result) => {
-              console.log(chalk.red(result));
-            });
+          try {
+            const result = await temporaryDataUtil(
+              encodeURIComponent(playersInfo[i].name),
+              playersInfo[i].duration,
+              playersInfo[i].score,
+              'playersComparisonSecond',
+              recognisedTemporaryTableNames
+            );
+            console.log(
+              chalk.blue(
+                'Database entry ' +
+                  chalk.whiteBright.underline(keyword(result.name)) +
+                  ' with duration ' +
+                  chalk.whiteBright.underline(keyword(result.time)) +
+                  ' and score ' +
+                  chalk.whiteBright.underline(keyword(result.score)) +
+                  ' added into ' +
+                  result.tableName
+              )
+            );
+          } catch (error) {
+            console.error('Error during data insertion:', error.message);
+          }
         }
 
         // Now that we have sent both players to the database - compare them both
