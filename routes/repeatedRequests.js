@@ -277,40 +277,50 @@ router.get('/', async (req, res) => {
       }
     });
 
-    // cron to manually check who is online or not
     // Cron Job to Check Who's Online
     cron.schedule('*/15 * * * * *', async () => {
       try {
-        const onlinePlayers = await getNewPlayers(); // Function to fetch online players
-        const onlinePlayerNames = onlinePlayers.map((player) => player.name); // Get names of currently online players
+        // Fetch the list of players currently online from the server
+        const onlinePlayers = await getNewPlayers();
 
-        // Fetch all current players in the database with online status
+        // Extract the player names from 'directPlayerInfo'
+        const playerInfo =
+          onlinePlayers.find((player) => player.directPlayerInfo)
+            ?.directPlayerInfo || [];
+        const onlinePlayerNames = playerInfo.map((player) =>
+          player.name.trim()
+        ); // Extract and trim player names
+
+        // Fetch all players in the database with their online status
         const [currentPlayers] = await pool.execute(
           'SELECT playerName, online FROM playerInfo'
         );
 
         for (const player of currentPlayers) {
-          // Check if the player is in the list of online players from the server
-          const isOnline = onlinePlayerNames.includes(player.playerName);
+          const playerName = player.playerName.trim(); // Trim the name for comparison
 
-          if (isOnline && !player.online) {
-            // If player is online but marked as offline in the database, update to online
-            await pool.execute(
-              'UPDATE playerInfo SET online = 1 WHERE playerName = ?',
-              [player.playerName]
-            );
-            console.log(`Set ${player.playerName} to online.`);
-          } else if (!isOnline && player.online) {
-            // If player is offline but marked as online in the database, update to offline
-            await pool.execute(
-              'UPDATE playerInfo SET online = 0 WHERE playerName = ?',
-              [player.playerName]
-            );
-            console.log(`Set ${player.playerName} to offline.`);
+          if (onlinePlayerNames.includes(playerName)) {
+            if (!player.online) {
+              // Player is online but marked as offline in the database, so mark them as online
+              await pool.execute(
+                'UPDATE playerInfo SET online = 1 WHERE playerName = ?',
+                [playerName]
+              );
+              console.log(`Set ${playerName} to online.`);
+            }
+          } else {
+            if (player.online) {
+              // Player is not found in the online players but marked as online in the database, so mark them as offline
+              await pool.execute(
+                'UPDATE playerInfo SET online = 0 WHERE playerName = ?',
+                [playerName]
+              );
+              console.log(`Set ${playerName} to offline.`);
+            }
           }
         }
 
-        console.log('Updated online status for players.');
+        console.log('Online status for players has been updated.');
       } catch (error) {
         console.error(`Error checking online players: ${error.message}`);
       }
@@ -517,9 +527,6 @@ router.get('/', async (req, res) => {
         );
         const newPlayers = newPlayersRows.filter((el) => el.name !== '');
 
-        console.log('New Players:', newPlayers);
-        console.log('Old Players:', oldPlayers);
-
         // Compare both arrays with each other and see which elements don't exist in other one
         let postRequests = [];
         // They have left and remove from oldPlayers array
@@ -637,7 +644,7 @@ router.get('/', async (req, res) => {
                 level: 'info',
                 message: `${
                   newPlayers[newPlayerIndex].name +
-                  "'s score is less than the old one as ******** new score is " +
+                  "'s score is less than the old one as new score is " +
                   newPlayers[newPlayerIndex].score +
                   ' and old score is ' +
                   oldPlayers[oldPlayerIndex].score +
@@ -645,19 +652,24 @@ router.get('/', async (req, res) => {
                   scoreDifference
                 }`,
               });
-              const pointsSpentQuery = `
-              UPDATE playerInfo
-              SET totalPointsSpent = totalPointsSpent + ?, totalPointsSpentDaily = totalPointsSpentDaily + ?, totalPointsSpentWeekly = totalPointsSpentWeekly + ?, totalPointsSpentMonthly = totalPointsSpentMonthly + ?
-              WHERE playerName = ?
-            `;
 
-              const pointsSpentRequest = pool
+              const pointsSpentQuery = `
+                  INSERT INTO playerInfo (playerName, totalPointsSpent, totalPointsSpentDaily, totalPointsSpentWeekly, totalPointsSpentMonthly)
+                  VALUES (?, ?, ?, ?, ?)
+                  ON DUPLICATE KEY UPDATE
+                    totalPointsSpent = totalPointsSpent + VALUES(totalPointsSpent),
+                    totalPointsSpentDaily = totalPointsSpentDaily + VALUES(totalPointsSpentDaily),
+                    totalPointsSpentWeekly = totalPointsSpentWeekly + VALUES(totalPointsSpentWeekly),
+                    totalPointsSpentMonthly = totalPointsSpentMonthly + VALUES(totalPointsSpentMonthly)
+                `;
+
+              await pool
                 .execute(pointsSpentQuery, [
-                  scoreDifference,
-                  scoreDifference,
-                  scoreDifference,
-                  scoreDifference,
                   newPlayers[newPlayerIndex].name,
+                  scoreDifference,
+                  scoreDifference,
+                  scoreDifference,
+                  scoreDifference,
                 ])
                 .then(([rows]) => {
                   console.log(
@@ -676,31 +688,24 @@ router.get('/', async (req, res) => {
               scoreDifference =
                 newPlayers[newPlayerIndex].score -
                 oldPlayers[oldPlayerIndex].score;
-              logger.log({
-                level: 'info',
-                message: `${
-                  newPlayers[newPlayerIndex].name +
-                  "'s score is more than the old one as ******** new score is " +
-                  newPlayers[newPlayerIndex].score +
-                  ' and old score is ' +
-                  oldPlayers[oldPlayerIndex].score +
-                  ' with difference ' +
-                  scoreDifference
-                }`,
-              });
-              const killsQuery = `
-              UPDATE playerInfo
-              SET totalKills = totalKills + ?, totalKillsDaily = totalKillsDaily + ?, totalKillsWeekly = totalKillsWeekly + ?, totalKillsMonthly = totalKillsMonthly + ?
-              WHERE playerName = ?
-            `;
 
-              const killsRequest = pool
+              const killsQuery = `
+                  INSERT INTO playerInfo (playerName, totalKills, totalKillsDaily, totalKillsWeekly, totalKillsMonthly)
+                  VALUES (?, ?, ?, ?, ?)
+                  ON DUPLICATE KEY UPDATE
+                    totalKills = totalKills + VALUES(totalKills),
+                    totalKillsDaily = totalKillsDaily + VALUES(totalKillsDaily),
+                    totalKillsWeekly = totalKillsWeekly + VALUES(totalKillsWeekly),
+                    totalKillsMonthly = totalKillsMonthly + VALUES(totalKillsMonthly)
+                `;
+
+              await pool
                 .execute(killsQuery, [
-                  scoreDifference / 2,
-                  scoreDifference / 2,
-                  scoreDifference / 2,
-                  scoreDifference / 2,
                   newPlayers[newPlayerIndex].name,
+                  scoreDifference / 2,
+                  scoreDifference / 2,
+                  scoreDifference / 2,
+                  scoreDifference / 2,
                 ])
                 .then(([rows]) => {
                   console.log(
@@ -725,12 +730,16 @@ router.get('/', async (req, res) => {
               }`,
             });
             const updateTimeQuery = `
-  UPDATE playerInfo
-  SET totalTime = totalTime + 0.25, totalTimeDaily = totalTimeDaily + 0.25, totalTimeWeekly = totalTimeWeekly + 0.25, totalTimeMonthly = totalTimeMonthly + 0.25
-  WHERE playerName = ?
-`;
+              INSERT INTO playerInfo (playerName, totalTime, totalTimeDaily, totalTimeWeekly, totalTimeMonthly)
+              VALUES (?, 0.25, 0.25, 0.25, 0.25)
+              ON DUPLICATE KEY UPDATE
+                totalTime = totalTime + 0.25,
+                totalTimeDaily = totalTimeDaily + 0.25,
+                totalTimeWeekly = totalTimeWeekly + 0.25,
+                totalTimeMonthly = totalTimeMonthly + 0.25
+            `;
 
-            const updateTimeRequest = pool
+            await pool
               .execute(updateTimeQuery, [newPlayers[newPlayerIndex].name])
               .then(([rows]) => {
                 console.log(
