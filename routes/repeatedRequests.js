@@ -277,6 +277,36 @@ router.get('/', async (req, res) => {
       }
     });
 
+    // cron to manually check who is online or not
+    cron.schedule('*/15 * * * * *', async () => {
+      console.log(
+        'Checking online players at',
+        moment().format('YYYY-MM-DD HH:mm:ss')
+      );
+
+      try {
+        // Fetch currently online players from the server
+        const serverPlayers = await getNewPlayers(); // Assuming getNewPlayers returns online players
+
+        const onlinePlayers = serverPlayers.map((player) => player.name);
+
+        // Update `online` status in the database
+        const updateOnlineStatusQuery = `
+          UPDATE playerInfo 
+          SET online = CASE 
+            WHEN playerName IN (?) THEN 1 
+            ELSE 0 
+          END
+        `;
+
+        await pool.execute(updateOnlineStatusQuery, [onlinePlayers]);
+
+        console.log('Successfully updated online status for players');
+      } catch (error) {
+        console.error('Error updating online status:', error.message);
+      }
+    });
+
     // initial request of players every 15 seconds to playersComparisonCache table
     const firstJob = schedule.scheduleJob(
       { rule: '*/15 * * * * *' },
