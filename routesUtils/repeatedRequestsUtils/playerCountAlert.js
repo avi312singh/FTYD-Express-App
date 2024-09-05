@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import query from 'source-server-query';
 import nodemailer from 'nodemailer';
 import chalk from 'chalk';
