@@ -35,16 +35,6 @@ const endpoint =
   (() => {
     new Error('Provide a api endpoint in env vars');
   });
-const basicAuthUsername =
-  process.env.BASICAUTHUSERNAME ||
-  (() => {
-    new Error('Provide a server IP in env vars');
-  });
-const basicAuthPassword =
-  process.env.BASICAUTHPASSWORD ||
-  (() => {
-    new Error('Provide a server IP in env vars');
-  });
 
 const recognisedTemporaryTableNames = [
   'playersComparisonFirst',
@@ -52,17 +42,7 @@ const recognisedTemporaryTableNames = [
 ];
 let running = false;
 
-const users = {};
-users[basicAuthUsername] = basicAuthPassword;
-
-const axiosBasicAuthConfig = {
-  auth: {
-    username: 'avi312',
-    password: basicAuthPassword,
-  },
-};
-
-const keyword = (keyword) => chalk.keyword('blue')(keyword);
+const keyword = (keyword) => chalk.hex('blue')(keyword);
 
 const getNewPlayers = async () => {
   const currentMapName = 'aocffa-ftyd_5_6_4';
@@ -103,6 +83,8 @@ router.get('/', async (req, res) => {
       message: 'Initiating repeated requests ',
       timestamp,
     });
+    console.log('Cleaning tables');
+    truncate();
 
     // Start running all scheduled tasks
 
@@ -300,11 +282,6 @@ router.get('/', async (req, res) => {
       { rule: '*/15 * * * * *' },
       async (fireDate) => {
         const serverInfoUnfiltered = await getNewPlayers();
-        console.log(serverInfoUnfiltered);
-        console.log(
-          'Player Information:',
-          JSON.stringify(serverInfoUnfiltered[1].directPlayerInfo, null, 2)
-        );
 
         const serverInfo = serverInfoUnfiltered
           .map((element) => element.directQueryInfo)
@@ -490,26 +467,19 @@ router.get('/', async (req, res) => {
 
         // Now that we have sent both players to the database - compare them both
         console.log('********* START COMPARISON ***************');
-        const oldPlayersUnfiltered = await axios
-          .get(
-            `${endpoint}dbinteractions/allRows?tableName=playersComparisonFirst`,
-            axiosBasicAuthConfig
-          )
-          .then((element) => element.data.result);
-        const newPlayersUnfiltered = await axios
-          .get(
-            `${endpoint}dbinteractions/allRows?tableName=playersComparisonSecond`,
-            axiosBasicAuthConfig
-          )
-          .then((element) => element.data.result);
 
-        // Remove entries where they have just joined and server hasn't loaded name yet
-        const oldPlayers = oldPlayersUnfiltered.rows.filter(
-          (el) => el.name !== '' || undefined
+        const [oldPlayersRows] = await pool.execute(
+          'SELECT name, time, score FROM playersComparisonFirst'
         );
-        const newPlayers = newPlayersUnfiltered.rows.filter(
-          (el) => el.name !== '' || undefined
+        const oldPlayers = oldPlayersRows.filter((el) => el.name !== '');
+
+        const [newPlayersRows] = await pool.execute(
+          'SELECT name, time, score FROM playersComparisonSecond'
         );
+        const newPlayers = newPlayersRows.filter((el) => el.name !== '');
+
+        console.log('New Players:', newPlayers);
+        console.log('Old Players:', oldPlayers);
 
         // Compare both arrays with each other and see which elements don't exist in other one
         let postRequests = [];
@@ -527,14 +497,23 @@ router.get('/', async (req, res) => {
                 : false;
             if (playerHasLeft) {
               console.log(oldPlayers[z].name + ' has abandoned the battle');
-              const endpointRequest = axios.post(
-                `${endpoint}serverstats/lastLogin?name=${encodeURIComponent(
-                  oldPlayers[z].name
-                )}`,
-                {},
-                axiosBasicAuthConfig
-              );
-              postRequests.push(endpointRequest);
+              const lastLoginQuery = `
+                UPDATE playerInfo
+                SET lastLogin = NOW(), online = 0
+                WHERE playerName = ?
+              `;
+              await pool
+                .execute(lastLoginQuery, [oldPlayers[z].name])
+                .then(([rows]) => {
+                  console.log(
+                    `Successfully updated lastLogin for player: ${oldPlayers[z].name}`
+                  );
+                })
+                .catch((error) => {
+                  console.error(
+                    `Failed to update lastLogin for player: ${oldPlayers[z].name}, Error: ${error.message}`
+                  );
+                });
               // remove from array
               const index = oldPlayers.indexOf(oldPlayers[z].name);
               if (index > -1) {
@@ -558,14 +537,28 @@ router.get('/', async (req, res) => {
                 : false;
             if (playerHasJoined) {
               console.log(newPlayers[y].name, ' has joined the server');
-              const endpointRequest = axios.post(
-                `${endpoint}serverstats/?name=${encodeURIComponent(
-                  newPlayers[y].name
-                )}`,
-                {},
-                axiosBasicAuthConfig
-              );
-              postRequests.push(endpointRequest);
+              const insertPlayerQuery = `
+              INSERT INTO playerInfo (playerName, online) 
+              VALUES (?, 1) 
+              ON DUPLICATE KEY UPDATE 
+                totalTime = totalTime + 0.25, 
+                totalTimeDaily = totalTimeDaily + 0.25, 
+                totalTimeWeekly = totalTimeWeekly + 0.25, 
+                totalTimeMonthly = totalTimeMonthly + 0.25
+              `;
+              await pool
+                .execute(insertPlayerQuery, [newPlayers[y].name])
+                .then(([rows]) => {
+                  console.log(
+                    `Successfully added/updated player: ${newPlayers[y].name} (new player)`
+                  );
+                })
+                .catch((error) => {
+                  console.error(
+                    `Failed to add/update player: ${newPlayers[y].name} (new player), Error: ${error.message}`
+                  );
+                });
+
               // remove from array
               const findIndex = _.findIndex(newPlayers, {
                 name: newPlayers[y].name,
@@ -578,7 +571,7 @@ router.get('/', async (req, res) => {
           }
         }
 
-        for (i = 0; i < newPlayers.length; i++) {
+        for (let i = 0; i < newPlayers.length; i++) {
           let scoreDifference = 0;
           let newPlayerIndex;
           let oldPlayerIndex;
@@ -613,14 +606,30 @@ router.get('/', async (req, res) => {
                   scoreDifference
                 }`,
               });
-              const endpointRequest = axios.post(
-                `${endpoint}serverstats/pointsSpent?name=${encodeURIComponent(
-                  newPlayers[newPlayerIndex].name
-                )}&pointsSpent=${scoreDifference >= 90 ? 0 : scoreDifference}`,
-                {},
-                axiosBasicAuthConfig
-              );
-              postRequests.push(endpointRequest);
+              const pointsSpentQuery = `
+              UPDATE playerInfo
+              SET totalPointsSpent = totalPointsSpent + ?, totalPointsSpentDaily = totalPointsSpentDaily + ?, totalPointsSpentWeekly = totalPointsSpentWeekly + ?, totalPointsSpentMonthly = totalPointsSpentMonthly + ?
+              WHERE playerName = ?
+            `;
+
+              const pointsSpentRequest = pool
+                .execute(pointsSpentQuery, [
+                  scoreDifference,
+                  scoreDifference,
+                  scoreDifference,
+                  scoreDifference,
+                  newPlayers[newPlayerIndex].name,
+                ])
+                .then(([rows]) => {
+                  console.log(
+                    `Successfully updated pointsSpent for player: ${newPlayers[newPlayerIndex].name}`
+                  );
+                })
+                .catch((error) => {
+                  console.error(
+                    `Failed to update pointsSpent for player: ${newPlayers[newPlayerIndex].name}, Error: ${error.message}`
+                  );
+                });
             } else if (
               newPlayers[newPlayerIndex].score >
               oldPlayers[oldPlayerIndex].score
@@ -640,18 +649,30 @@ router.get('/', async (req, res) => {
                   scoreDifference
                 }`,
               });
-              const endpointRequest = axios.post(
-                `${endpoint}serverstats/kills?name=${encodeURIComponent(
-                  newPlayers[newPlayerIndex].name
-                )}&kills=${
-                  scoreDifference % 2 == 0
-                    ? scoreDifference / 2
-                    : scoreDifference
-                }`,
-                {},
-                axiosBasicAuthConfig
-              );
-              postRequests.push(endpointRequest);
+              const killsQuery = `
+              UPDATE playerInfo
+              SET totalKills = totalKills + ?, totalKillsDaily = totalKillsDaily + ?, totalKillsWeekly = totalKillsWeekly + ?, totalKillsMonthly = totalKillsMonthly + ?
+              WHERE playerName = ?
+            `;
+
+              const killsRequest = pool
+                .execute(killsQuery, [
+                  scoreDifference / 2,
+                  scoreDifference / 2,
+                  scoreDifference / 2,
+                  scoreDifference / 2,
+                  newPlayers[newPlayerIndex].name,
+                ])
+                .then(([rows]) => {
+                  console.log(
+                    `Successfully updated kills for player: ${newPlayers[newPlayerIndex].name}`
+                  );
+                })
+                .catch((error) => {
+                  console.error(
+                    `Failed to update kills for player: ${newPlayers[newPlayerIndex].name}, Error: ${error.message}`
+                  );
+                });
             }
           } else {
             logger.log({
@@ -664,14 +685,24 @@ router.get('/', async (req, res) => {
                 oldPlayers[oldPlayerIndex].score
               }`,
             });
-            const endpointRequest = axios.post(
-              `${endpoint}serverstats/?name=${encodeURIComponent(
-                newPlayers[newPlayerIndex].name
-              )}`,
-              {},
-              axiosBasicAuthConfig
-            );
-            postRequests.push(endpointRequest);
+            const updateTimeQuery = `
+  UPDATE playerInfo
+  SET totalTime = totalTime + 0.25, totalTimeDaily = totalTimeDaily + 0.25, totalTimeWeekly = totalTimeWeekly + 0.25, totalTimeMonthly = totalTimeMonthly + 0.25
+  WHERE playerName = ?
+`;
+
+            const updateTimeRequest = pool
+              .execute(updateTimeQuery, [newPlayers[newPlayerIndex].name])
+              .then(([rows]) => {
+                console.log(
+                  `Successfully updated time for player: ${newPlayers[newPlayerIndex].name}`
+                );
+              })
+              .catch((error) => {
+                console.error(
+                  `Failed to update time for player: ${newPlayers[newPlayerIndex].name}, Error: ${error.message}`
+                );
+              });
           }
         }
 
@@ -698,7 +729,7 @@ router.get('/', async (req, res) => {
     secondJob.cancelNext(true);
   } else {
     console.log(
-      'Already running, restart endpoint/dyno in heroku and call repeatedRequests again'
+      'repeatedRequests is already running and was called at: ' + timestamp
     );
     return res.status(404).json({
       error: {

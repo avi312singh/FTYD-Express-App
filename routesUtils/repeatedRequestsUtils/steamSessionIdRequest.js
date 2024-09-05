@@ -1,26 +1,19 @@
-import https from 'https';
-import cookie from 'cookie';
+import axios from 'axios';
 
-const steamSessionIdRequest = async () => {
-  return new Promise((resolve, reject) => {
-    let sessionid = '';
-    try {
-      https.get('https://store.steampowered.com/', (response) => {
-        variable = response.headers['set-cookie'];
-        console.log('session ID to be used from cookies array: ', variable);
-        const cookies = cookie.parse(variable[1]);
-        sessionid = cookies.sessionid;
-        return sessionid
-          ? setTimeout(() => {
-              console.log('Waited for 1 minute');
-              resolve(sessionid);
-            }, 60000)
-          : reject('Steam session id request failed');
-      });
-    } catch (error) {
-      reject('Steam session id request failed');
-    }
-  });
+const steamSessionIdRequest = async (sessionId) => {
+  try {
+    const response = await axios.get(`https://steamcommunity.com/my`, {
+      headers: {
+        Cookie: `sessionid=${sessionId}`,
+      },
+    });
+
+    console.log('Successfully fetched Steam session ID page');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Steam session ID:', error.message);
+    throw new Error('Failed to fetch Steam session ID');
+  }
 };
 
 export default steamSessionIdRequest;

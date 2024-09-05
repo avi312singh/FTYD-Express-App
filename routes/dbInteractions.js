@@ -26,7 +26,7 @@ const logger = winston.createLogger({
   ],
 });
 
-const keyword = (keyword) => chalk.keyword('blue')(keyword);
+const keyword = (keyword) => chalk.hex('blue')(keyword);
 
 router.use(function timeLog(req, res, next) {
   const timestampForRequest = moment().format('YYYY-MM-DD HH:mm:ss');

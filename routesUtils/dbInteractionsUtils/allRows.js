@@ -1,36 +1,20 @@
 import pool from '../../db/db.js';
 
-const allRows = (tableName, recognisedTableNames) => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (tableName) {
-        if (recognisedTableNames.includes(tableName)) {
-          pool.getConnection((err, connection) => {
-            if (err) console.error(err);
-            connection.query(
-              `SELECT * FROM ${tableName}`,
-              (error, rows, fields) => {
-                if (error) console.log(error);
-                connection.release();
-                return err
-                  ? reject(err)
-                  : resolve({
-                      rows,
-                    });
-              }
-            );
-            if (err) throw err;
-          });
-        } else {
-          reject('Please provide a valid tableName');
-        }
-      } else {
-        reject('Please provide tableName in query params');
-      }
-    } catch (error) {
-      reject('Error has occurred ', error);
-    }
-  });
+const allRowsUtil = async (tableName, recognisedTableNames) => {
+  // Validate the table name against recognised table names
+  if (!recognisedTableNames.includes(tableName)) {
+    throw new Error(`Table name '${tableName}' is not recognised.`);
+  }
+
+  try {
+    // Use backticks to ensure the table name is properly escaped
+    const query = `SELECT * FROM \`${tableName}\``;
+    const [rows] = await pool.execute(query);
+    return rows;
+  } catch (error) {
+    console.error(`Error fetching data from '${tableName}': ${error.message}`);
+    throw new Error(`Failed to fetch data from ${tableName}.`);
+  }
 };
 
-export default allRows;
+export default allRowsUtil;

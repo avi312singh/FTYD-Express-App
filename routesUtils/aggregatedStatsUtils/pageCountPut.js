@@ -1,38 +1,33 @@
-const pageCountPut = (pageFromRequest, pool) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const pageCheckIfInParams = pageFromRequest
-        ? pageFromRequest
-        : reject('Provide a param for the page');
-      const page =
-        pageCheckIfInParams !== '/' &&
-        pageCheckIfInParams !== 'donate' &&
-        pageCheckIfInParams !== 'server-info' &&
-        pageCheckIfInParams !== 'player-stats' &&
-        pageCheckIfInParams !== 'server-data' &&
-        pageCheckIfInParams !== 'top-players'
-          ? reject('Not a valid page')
-          : pageCheckIfInParams.toString();
-      pool.getConnection((err, connection) => {
-        if (err) console.log(err);
-        connection.query(
-          `INSERT INTO pageCount (page) VALUES ('${page}') ON DUPLICATE KEY UPDATE hits = hits + 1`,
-          (err, result) => {
-            if (err) console.log(err);
-            return err
-              ? reject(err)
-              : resolve({
-                  page: page,
-                });
-          }
-        );
-        connection.release();
-        if (err) throw err;
-      });
-    } catch (error) {
-      reject('Error has occurred ', error);
-    }
-  });
+import pool from '../../db/db.js';
+
+const pageCountPutUtil = (page) => {
+  // List of recognized pages
+  const recognizedPages = [
+    '/',
+    'donate',
+    'server-info',
+    'player-stats',
+    'server-data',
+    'top-players',
+  ];
+
+  // Check if the page is recognized
+  if (!recognizedPages.includes(page)) {
+    return Promise.reject('Not a valid page');
+  }
+
+  const query = `
+    UPDATE pageCount SET hits = hits + 1, lastHit = NOW() 
+    WHERE page = ?;
+  `;
+
+  return pool
+    .execute(query, [page])
+    .then(() => ({ page }))
+    .catch((err) => {
+      console.error(`Error updating page count for ${page}: ${err.message}`);
+      throw err;
+    });
 };
 
-export default pageCountPut;
+export default pageCountPutUtil;

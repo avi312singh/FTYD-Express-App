@@ -1,56 +1,90 @@
-import chalk from 'chalk';
 import query from 'source-server-query';
 import utf8 from 'utf8';
+import chalk from 'chalk';
+import winston from 'winston';
 
-import dotenv from 'dotenv';
-dotenv.config();
+// Set up logging
+const dir = './logging/';
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'server-stats-service' },
+  transports: [
+    new winston.transports.File({
+      filename: `${dir}logging.log`,
+      level: 'info',
+      maxsize: 7000,
+    }),
+    new winston.transports.File({
+      filename: `${dir}error.log`,
+      level: 'error',
+    }),
+  ],
+});
 
-function directPlayerInfoUtf8Encoded(arrayToBeUtf8d) {
-  if (!Array.isArray(arrayToBeUtf8d)) {
-    return []; // Return an empty array if input is not an array
-  }
-
-  for (let i = 0; i < arrayToBeUtf8d.length; i++) {
-    arrayToBeUtf8d[i].name = utf8.decode(arrayToBeUtf8d[i].name);
-    delete arrayToBeUtf8d[i].index;
-  }
-  return arrayToBeUtf8d;
+function directPlayerInfoUtf8Encoded(players) {
+  return players.map((player) => ({
+    name: utf8.decode(player.name),
+    // Remove index if it's present
+    ...Object.fromEntries(
+      Object.entries(player).filter(([key]) => key !== 'index')
+    ),
+  }));
 }
 
 const serverStatsUtil = async (currentMapName, currentServerName, serverIp) => {
   let allServerInfo = [];
-  try {
-    let directQueryInfo = await query
-      .info(serverIp, 7779, 8000)
-      .then(query.close)
-      .catch(console.error);
-    let directPlayerInfo = await query
-      .players(serverIp, 7779, 8000)
-      .then(query.close)
-      .catch(console.error);
 
-    if (directQueryInfo instanceof Error || !directQueryInfo) {
-      directQueryInfo = {
-        status: 'offline',
-        playersnum: 0,
-      };
+  try {
+    const directQueryInfo = await query
+      .info(serverIp, 7779, 8000)
+      .catch((error) => {
+        logger.error(`Error fetching server info: ${error.message}`);
+        console.error(
+          chalk.red(`Error fetching server info: ${error.message}`)
+        );
+        return null;
+      });
+
+    const directPlayerInfo = await query
+      .players(serverIp, 7779, 8000)
+      .catch((error) => {
+        logger.error(`Error fetching player info: ${error.message}`);
+        console.error(
+          chalk.red(`Error fetching player info: ${error.message}`)
+        );
+        return [];
+      });
+
+    // Handling the case when the server info query fails
+    if (!directQueryInfo) {
+      logger.warn(`Server seems offline for IP: ${serverIp}`);
+      allServerInfo.push({
+        directQueryInfo: {
+          status: 'offline',
+          playersnum: 0,
+        },
+      });
     } else {
       directQueryInfo.status = 'online';
+      allServerInfo.push({ directQueryInfo });
     }
 
-    allServerInfo.push({ directQueryInfo });
     allServerInfo.push({
       directPlayerInfo: directPlayerInfoUtf8Encoded(directPlayerInfo),
     });
+
     return allServerInfo;
   } catch (error) {
+    // Log and return default response if something goes wrong
+    logger.error(`Error fetching server stats: ${error.message}`);
     console.error(
       chalk.red(
-        'Sending default response as error has occurred whilst fetching a set of new players with error: ' +
-          error
+        `Sending default response as an error occurred whilst fetching new players: ${error.message}`
       )
     );
 
+    // Default fallback response when an error occurs
     allServerInfo.push({
       directQueryInfo: {
         name: currentServerName,
@@ -64,7 +98,9 @@ const serverStatsUtil = async (currentMapName, currentServerName, serverIp) => {
         status: 'offline',
       },
     });
+
     allServerInfo.push({ directPlayerInfo: [] });
+
     return allServerInfo;
   }
 };

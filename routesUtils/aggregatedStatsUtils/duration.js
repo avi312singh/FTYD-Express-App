@@ -1,116 +1,68 @@
-const duration = (durationFromRequest, pool) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const durationCheckIfInParams = durationFromRequest
-        ? durationFromRequest
-        : 288;
-      const duration =
-        durationCheckIfInParams !== '2016' &&
-        durationCheckIfInParams !== '8760' &&
-        durationCheckIfInParams !== '666' &&
-        durationCheckIfInParams !== '999'
-          ? 288
-          : parseInt(durationCheckIfInParams);
-      pool.getConnection((err, connection) => {
-        if (err) console.log(err);
-        switch (duration) {
-          // weekly
-          case 2016:
-            connection.query(
-              `SELECT SUM(totalTimeWeekly) as totalTimeWeekly FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // monthly
-          case 8760:
-            connection.query(
-              `SELECT SUM(totalTimeMonthly) as totalTimeMonthly FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // all
-          case 666:
-            connection.query(
-              `SELECT SUM(totalTime) as totalTime FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // daily
-          case 288:
-            connection.query(
-              `SELECT SUM(totalTimeDaily) as totalTimeDaily FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // all columns
-          case 999:
-            connection.query(
-              `SELECT SUM(totalTimeDaily), SUM(totalTimeWeekly), SUM(totalTimeMonthly), SUM(totalTime) FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                const durations = ['Today', 'Week', 'Month', 'All'];
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: durations.map((duration, index) => {
-                        return {
-                          name: duration,
-                          kills: Math.round(Object.values(result[0])[index]),
-                        };
-                      }),
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-        }
-      });
-    } catch (error) {
-      reject('Error has occurred ', error);
-    }
-  });
+import pool from '../../db/db.js';
+
+const durationUtil = (duration) => {
+  let query;
+  switch (duration) {
+    case 2016: // Weekly
+      query = `
+        SELECT SUM(totalTimeWeekly) as totalTime 
+        FROM playerInfo;
+      `;
+      break;
+    case 8760: // Monthly
+      query = `
+        SELECT SUM(totalTimeMonthly) as totalTime 
+        FROM playerInfo;
+      `;
+      break;
+    case 666: // All time
+      query = `
+        SELECT SUM(totalTime) as totalTime 
+        FROM playerInfo;
+      `;
+      break;
+    case 288: // Daily
+      query = `
+        SELECT SUM(totalTimeDaily) as totalTime 
+        FROM playerInfo;
+      `;
+      break;
+    case 999: // All columns (Daily, Weekly, Monthly, and Total)
+      query = `
+        SELECT SUM(totalTimeDaily) as totalTimeDaily, 
+               SUM(totalTimeWeekly) as totalTimeWeekly, 
+               SUM(totalTimeMonthly) as totalTimeMonthly, 
+               SUM(totalTime) as totalTime 
+        FROM playerInfo;
+      `;
+      break;
+    default:
+      return Promise.reject('Invalid duration parameter');
+  }
+
+  return pool
+    .execute(query)
+    .then(([rows]) => {
+      if (duration === 999) {
+        const [result] = rows;
+        const response = [
+          { name: 'Today', totalTime: Math.round(result.totalTimeDaily) },
+          { name: 'Week', totalTime: Math.round(result.totalTimeWeekly) },
+          { name: 'Month', totalTime: Math.round(result.totalTimeMonthly) },
+          { name: 'All', totalTime: Math.round(result.totalTime) },
+        ];
+        return { duration, response };
+      } else {
+        const totalTime = rows[0]?.totalTime || 0;
+        return { duration, totalTime };
+      }
+    })
+    .catch((err) => {
+      console.error(
+        `Error fetching total time for duration ${duration}: ${err.message}`
+      );
+      throw err;
+    });
 };
 
-export default duration;
+export default durationUtil;

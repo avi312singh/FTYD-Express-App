@@ -1,41 +1,51 @@
 import pool from '../../db/db.js';
+import winston from 'winston';
 
-const kills = (encodedNameToBeStored, killsToBeStored) => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (encodedNameToBeStored && killsToBeStored) {
-        if (isNaN(killsToBeStored)) {
-          reject('Kills needs to be a number');
-        }
-        pool.getConnection((err, connection) => {
-          const name = decodeURIComponent(encodedNameToBeStored);
-          let kills = killsToBeStored;
-          kills > 12 ? (kills = 1) : (kills = kills);
-          if (err) console.log(err);
-          connection.query(
-            `INSERT INTO playerInfo (playerName, totalKills, totalKillsDaily, totalKillsWeekly, totalKillsMonthly, online) VALUES (?, ${kills}, ${kills}, ${kills}, ${kills}, 1)
-                        ON DUPLICATE KEY UPDATE totalTime = totalTime + .25, totalTimeDaily = totalTimeDaily + .25, totalTimeWeekly = totalTimeWeekly + .25, totalTimeMonthly = totalTimeMonthly + .25,
-                        totalKills = totalKills + ${kills}, totalKillsDaily = totalKillsDaily + ${kills}, totalKillsWeekly = totalKillsWeekly + ${kills}, totalKillsMonthly = totalKillsMonthly + ${kills},
-                        online = 1`,
-            [name],
-            (err, result) => {
-              connection.release();
-              return err
-                ? reject(err)
-                : resolve({
-                    name: name,
-                    kills: kills,
-                    online: true,
-                    // , result: result
-                  });
-            }
-          );
-        });
-      } else reject('Please enter name and kills in query params');
-    } catch (error) {
-      return reject(error);
-    }
-  });
+const dir = './logging/';
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'kills-service' },
+  transports: [
+    new winston.transports.File({
+      filename: `${dir}logging.log`,
+      level: 'info',
+      maxsize: 7000,
+    }),
+    new winston.transports.File({
+      filename: `${dir}error.log`,
+      level: 'error',
+    }),
+  ],
+});
+
+const killsUtil = async (name, kills) => {
+  try {
+    const query = `
+      UPDATE playerInfo 
+      SET totalKills = totalKills + ?, 
+          totalKillsDaily = totalKillsDaily + ?, 
+          totalKillsWeekly = totalKillsWeekly + ?, 
+          totalKillsMonthly = totalKillsMonthly + ? 
+      WHERE playerName = ?
+    `;
+
+    const values = [kills, kills, kills, kills, name];
+
+    const [result] = await pool.execute(query, values);
+
+    const message = `Updated kills for player: ${name}. Kills added: ${kills}`;
+    console.log(message);
+    logger.info(message);
+
+    return { name, kills, result };
+  } catch (error) {
+    const errorMessage = `Error updating kills for player '${name}': ${error.message}`;
+    console.error(errorMessage);
+    logger.error(errorMessage);
+
+    throw new Error(errorMessage);
+  }
 };
 
-export default kills;
+export default killsUtil;

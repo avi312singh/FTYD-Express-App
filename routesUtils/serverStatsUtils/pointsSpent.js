@@ -1,35 +1,53 @@
 import pool from '../../db/db.js';
+import winston from 'winston';
 
-const pointsSpent = (encodedNameToBeStored, pointsSpentToBeStored) => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (encodedNameToBeStored && pointsSpentToBeStored) {
-        pool.getConnection((err, connection) => {
-          if (err) console.log(err);
-          const name = decodeURIComponent(encodedNameToBeStored);
-          const pointsSpent = pointsSpentToBeStored;
-          connection.query(
-            `INSERT INTO playerInfo (playerName, totalPointsSpent, totalPointsSpentDaily, totalPointsSpentWeekly, totalPointsSpentMonthly, online) VALUES (?, ${pointsSpent}, ${pointsSpent}, ${pointsSpent}, ${pointsSpent}, 1)
-                        ON DUPLICATE KEY UPDATE totalTime = totalTime + .25, totalTimeDaily = totalTimeDaily + .25, totalTimeWeekly = totalTimeWeekly + .25, totalTimeMonthly = totalTimeMonthly + .25, totalPointsSpent = totalPointsSpent + ${pointsSpent}, totalPointsSpentDaily = totalPointsSpentDaily + ${pointsSpent}, online = 1`,
-            [name],
-            (err, result) => {
-              connection.release();
-              return err
-                ? reject(err)
-                : resolve({
-                    name: name,
-                    pointsSpent: pointsSpent,
-                    online: true,
-                    // , result: result
-                  });
-            }
-          );
-        });
-      } else reject('Please enter name and points spent in query params');
-    } catch (error) {
-      return reject(error);
-    }
-  });
+const dir = './logging/';
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'pointsSpent-service' },
+  transports: [
+    new winston.transports.File({
+      filename: `${dir}logging.log`,
+      level: 'info',
+      maxsize: 7000,
+    }),
+    new winston.transports.File({
+      filename: `${dir}error.log`,
+      level: 'error',
+    }),
+  ],
+});
+
+const pointsSpentUtil = async (encodedName, pointsSpent) => {
+  try {
+    const name = decodeURIComponent(encodedName);
+
+    const query = `
+      UPDATE playerInfo 
+      SET totalPointsSpent = totalPointsSpent + ?, 
+          totalPointsSpentDaily = totalPointsSpentDaily + ?, 
+          totalPointsSpentWeekly = totalPointsSpentWeekly + ?, 
+          totalPointsSpentMonthly = totalPointsSpentMonthly + ? 
+      WHERE playerName = ? 
+      LIMIT 1;
+    `;
+
+    const values = [pointsSpent, pointsSpent, pointsSpent, pointsSpent, name];
+
+    const [result] = await pool.execute(query, values);
+
+    const message = `Player '${name}' spent ${pointsSpent} points.`;
+    console.log(message);
+    logger.info(message);
+
+    return { name, pointsSpent, result };
+  } catch (error) {
+    const errorMessage = `Error updating points spent for '${encodedName}': ${error.message}`;
+    console.error(errorMessage);
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
+  }
 };
 
-export default pointsSpent;
+export default pointsSpentUtil;

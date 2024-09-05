@@ -1,116 +1,68 @@
-const killCount = (durationFromRequest, pool) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const durationCheckIfInParams = durationFromRequest
-        ? durationFromRequest
-        : 288;
-      const duration =
-        durationCheckIfInParams !== '2016' &&
-        durationCheckIfInParams !== '8760' &&
-        durationCheckIfInParams !== '666' &&
-        durationCheckIfInParams !== '999'
-          ? 288
-          : parseInt(durationCheckIfInParams);
-      pool.getConnection((err, connection) => {
-        if (err) console.log(err);
-        switch (duration) {
-          // weekly
-          case 2016:
-            connection.query(
-              `SELECT SUM(totalKillsWeekly) as totalKillsWeekly FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // monthly
-          case 8760:
-            connection.query(
-              `SELECT SUM(totalKillsMonthly) as totalKillsMonthly FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // all
-          case 666:
-            connection.query(
-              `SELECT SUM(totalKills) as totalKills FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // daily
-          case 288:
-            connection.query(
-              `SELECT SUM(totalKillsDaily) as totalKillsDaily FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: result,
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-          // all columns
-          case 999:
-            connection.query(
-              `SELECT SUM(totalKillsDaily), SUM(totalKillsWeekly), SUM(totalKillsMonthly), SUM(totalKills) FROM playerInfo;`,
-              (err, result) => {
-                if (err) console.log(err);
-                const durations = ['Today', 'Week', 'Month', 'All'];
-                return err
-                  ? reject(err)
-                  : resolve({
-                      duration,
-                      response: durations.map((duration, index) => {
-                        return {
-                          name: duration,
-                          kills: Object.values(result[0])[index],
-                        };
-                      }),
-                    });
-              }
-            );
-            connection.release();
-            if (err) throw err;
-            break;
-        }
-      });
-    } catch (error) {
-      reject('Error has occurred ', error);
-    }
-  });
+import pool from '../../db/db.js';
+
+const killCountUtil = (duration) => {
+  let query;
+  switch (duration) {
+    case 2016: // Weekly
+      query = `
+        SELECT SUM(totalKillsWeekly) as totalKills 
+        FROM playerInfo;
+      `;
+      break;
+    case 8760: // Monthly
+      query = `
+        SELECT SUM(totalKillsMonthly) as totalKills 
+        FROM playerInfo;
+      `;
+      break;
+    case 666: // All time
+      query = `
+        SELECT SUM(totalKills) as totalKills 
+        FROM playerInfo;
+      `;
+      break;
+    case 288: // Daily
+      query = `
+        SELECT SUM(totalKillsDaily) as totalKills 
+        FROM playerInfo;
+      `;
+      break;
+    case 999: // All columns (Daily, Weekly, Monthly, and Total)
+      query = `
+        SELECT SUM(totalKillsDaily) as totalKillsDaily, 
+               SUM(totalKillsWeekly) as totalKillsWeekly, 
+               SUM(totalKillsMonthly) as totalKillsMonthly, 
+               SUM(totalKills) as totalKills 
+        FROM playerInfo;
+      `;
+      break;
+    default:
+      return Promise.reject('Invalid duration parameter');
+  }
+
+  return pool
+    .execute(query)
+    .then(([rows]) => {
+      if (duration === 999) {
+        const [result] = rows;
+        const response = [
+          { name: 'Today', totalKills: result.totalKillsDaily },
+          { name: 'Week', totalKills: result.totalKillsWeekly },
+          { name: 'Month', totalKills: result.totalKillsMonthly },
+          { name: 'All', totalKills: result.totalKills },
+        ];
+        return { duration, response };
+      } else {
+        const totalKills = rows[0]?.totalKills || 0;
+        return { duration, totalKills };
+      }
+    })
+    .catch((err) => {
+      console.error(
+        `Error fetching total kills for duration ${duration}: ${err.message}`
+      );
+      throw err;
+    });
 };
 
-export default killCount;
+export default killCountUtil;

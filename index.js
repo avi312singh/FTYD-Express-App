@@ -11,24 +11,11 @@ import aggregatedStats from './routes/aggregatedstats.js';
 import repeatedRequests from './routes/repeatedRequests.js';
 import dbInteractions from './routes/dbInteractions.js';
 
-const basicAuthUsername =
-  process.env.BASICAUTHUSERNAME ||
-  (() => {
-    new Error('Provide a basic auth username in env vars');
-  });
-const basicAuthPassword =
-  process.env.BASICAUTHPASSWORD ||
-  (() => {
-    new Error('Provide a basic auth password in env vars');
-  });
 const port =
   process.env.PORT ||
   (() => {
     new Error('Provide a basic auth password in env vars');
   });
-
-const users = {};
-users[basicAuthUsername] = basicAuthPassword;
 
 const app = express();
 

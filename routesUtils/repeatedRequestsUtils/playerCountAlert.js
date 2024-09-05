@@ -1,14 +1,17 @@
 import query from 'source-server-query';
 import nodemailer from 'nodemailer';
-import chalk from 'chalk'; // Assuming chalk is being used
+import chalk from 'chalk';
 
-const gmailPassword = process.env.GMAILPASSWORD;
+const gmailPassword =
+  process.env.GMAILPASSWORD ||
+  (() => {
+    throw new Error('Provide a Gmail password in env vars');
+  })();
 const serverIp =
   process.env.SERVERIP ||
   (() => {
     throw new Error('Provide a server IP in env vars');
   })();
-
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -17,50 +20,38 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendPlayerCountEmail = async () => {
+const playerCountAlert = async () => {
   try {
     const directQueryInfo = await query
-      .info(serverIp, 7779, 800)
+      .info(serverIp, 7779, 8000)
       .then(query.close)
       .catch(console.error);
 
-    if (
-      !(directQueryInfo instanceof Error) &&
-      directQueryInfo.playersnum > 20
-    ) {
+    if (directQueryInfo instanceof Error) {
+      return;
+    }
+
+    if (directQueryInfo.playersnum > 20) {
       const playerCountEmail = {
         from: 'avi312singh@gmail.com',
         to: 'avi312singh@gmail.com',
-        subject: 'FTYD player count: ' + directQueryInfo.playersnum,
-        text:
-          'The player count has gone above 20! ' +
-          JSON.stringify(directQueryInfo),
+        subject: `FTYD player count: ${directQueryInfo.playersnum}`,
+        text: `The player count has gone above 20! ${directQueryInfo}`,
       };
 
-      return transporter.sendMail(playerCountEmail, (error, info) => {
+      transporter.sendMail(playerCountEmail, (error, info) => {
         if (error) {
-          console.log(error);
+          console.error(error);
         } else {
-          console.log('Server is online!');
-          console.log(
-            'Email sent: ' +
-              info.response +
-              ' and this was returned from the server fetch request: ' +
-              JSON.stringify(directQueryInfo)
-          );
+          console.log('Player count alert sent successfully!', info.response);
         }
       });
-    } else {
-      console.log('Player count is below threshold or an error occurred.');
     }
   } catch (error) {
     console.error(
-      chalk.red(
-        'Error occurred whilst sending a request to the server regarding its status with error: ' +
-          error
-      )
+      chalk.red(`Error occurred while fetching player count: ${error}`)
     );
   }
 };
 
-export default sendPlayerCountEmail;
+export default playerCountAlert;
